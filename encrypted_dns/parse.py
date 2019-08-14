@@ -25,9 +25,6 @@ class ParseQuery:
 
     @staticmethod
     def parse_flags(flags_data):
-        print(int.from_bytes(flags_data[:1], byteorder='big'), int.from_bytes(flags_data[1:2], byteorder='big'))
-        print(bin(int.from_bytes(flags_data[:1], byteorder='big')),
-              bin(int.from_bytes(flags_data[1:2], byteorder='big')))
         qr = utils.get_bit_from_byte(flags_data[:1], 0)
         qpcode = utils.get_bit_from_byte(flags_data[:1], 1, 4)
         aa = utils.get_bit_from_byte(flags_data[:1], 5)

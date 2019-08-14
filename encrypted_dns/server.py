@@ -1,6 +1,6 @@
 import socket
 
-from encrypted_dns import parse
+from encrypted_dns import parse, upstream
 
 
 class Server:
@@ -14,15 +14,22 @@ class Server:
         self.server.bind((self.ip, self.port))
 
         while True:
-            query_data, address = self.server.recvfrom(512)
-            print(query_data)
-            self.handel_query(query_data)
+            query_data, query_address = self.server.recvfrom(512)
+            print('query_data:', query_data)
+            self.handle_query(query_data, query_address)
 
     def _send(self, response_data, address):
         self.server.sendto(response_data, address)
 
-    @staticmethod
-    def handel_query(query_data):
+    def handle_query(self, query_data, query_address):
         query_parser = parse.ParseQuery(query_data)
         parse_result = query_parser.parse_plain()
-        print(parse_result)
+        print('parse_result:', parse_result)
+
+        https_upstream = upstream.HTTPSUpsream('https://cloudflare-dns.com/dns-query?')
+        response = https_upstream.query(query_data)
+        self.server.sendto(response, query_address)
+
+
+test_server = Server()
+test_server.start()
