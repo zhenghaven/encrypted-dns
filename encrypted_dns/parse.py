@@ -1,6 +1,46 @@
 from encrypted_dns import utils
 
 
+class ParseHeader:
+
+    @staticmethod
+    def parse_header(data):
+        header = {
+            'transaction_id': data[:2],
+            'flags': ParseHeader.parse_flags(data[2:4]),
+            'question_count': int.from_bytes(data[4:6], byteorder='big'),
+            'answer_count': int.from_bytes(data[6:8], byteorder='big'),
+            'name_server_count': int.from_bytes(data[8:10], byteorder='big'),
+            'additional_record__count': int.from_bytes(data[10:12], byteorder='big')
+        }
+
+        return header
+
+    @staticmethod
+    def parse_flags(flags_data):
+        qr = utils.get_bit_from_byte(flags_data[:1], 0)
+        qpcode = utils.get_bit_from_byte(flags_data[:1], 1, 4)
+        aa = utils.get_bit_from_byte(flags_data[:1], 5)
+        tc = utils.get_bit_from_byte(flags_data[:1], 6)
+        rd = utils.get_bit_from_byte(flags_data[:1], 7)
+        ra = utils.get_bit_from_byte(flags_data[1:2], 0)
+        z = utils.get_bit_from_byte(flags_data[1:2], 1, 3)
+        rcode = utils.get_bit_from_byte(flags_data[1:2], 4, 7)
+
+        flags = {
+            'QR': qr,
+            'OPCODE': qpcode,
+            'AA': aa,
+            'TC': tc,
+            'RD': rd,
+            'RA': ra,
+            'Z': z,
+            'RCODE': rcode
+        }
+
+        return flags
+
+
 class ParseQuery:
     def __init__(self, query_data):
         self.data = query_data
@@ -8,14 +48,7 @@ class ParseQuery:
     def parse_plain(self):
         query_data = self.data
 
-        header = {
-            'transaction_id': query_data[:2],
-            'flags': self.parse_flags(query_data[2:4]),
-            'question_count': int.from_bytes(query_data[4:6], byteorder='big'),
-            'answer_count': int.from_bytes(query_data[6:8], byteorder='big'),
-            'name_server_count': int.from_bytes(query_data[8:10], byteorder='big'),
-            'additional_record__count': int.from_bytes(query_data[10:12], byteorder='big')
-        }
+        header = ParseHeader.parse_header(query_data)
 
         question = self.parse_question(query_data[12:])
         answer = {}
