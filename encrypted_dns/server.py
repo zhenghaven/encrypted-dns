@@ -20,7 +20,6 @@ class Server:
             print('recv_data:', recv_data)
 
             transaction_id = recv_header['transaction_id']
-            transaction_id = transaction_id.hex()
             print('transaction_id:', transaction_id)
 
             if recv_header['flags']['QR'] == '0':
@@ -47,8 +46,11 @@ class Server:
 
         # https_upstream = upstream.HTTPSUpstream(self.server, 'https://1.1.1.1/dns-query?')
         # https_upstream.query(query_data)
-        plain_upstream = upstream.PlainUpstream(self.server, '1.1.1.1')
-        plain_upstream.query(query_data)
+        # plain_upstream = upstream.PlainUpstream(self.server, '1.1.1.1')
+        # plain_upstream.query(query_data)
+
+        tls_upstream = upstream.TLSUpstream(self.server, 'dns.google')
+        tls_upstream.query(query_data)
 
     @staticmethod
     def handle_response(self):
