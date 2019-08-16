@@ -6,7 +6,7 @@ class ParseHeader:
     @staticmethod
     def parse_header(data):
         header = {
-            'transaction_id': data[:2],
+            'transaction_id': data[:2].hex(),
             'flags': ParseHeader.parse_flags(data[2:4]),
             'question_count': int.from_bytes(data[4:6], byteorder='big'),
             'answer_count': int.from_bytes(data[6:8], byteorder='big'),

@@ -1,4 +1,6 @@
 import base64
+import ssl
+import socket
 import urllib.parse
 import urllib.request
 
@@ -14,6 +16,34 @@ class PlainUpstream:
 
     def _send(self, message_data):
         self.client.sendto(message_data, (self.upstream_ip, self.upsream_port))
+
+
+class TLSUpstream:
+    def __init__(self, client, upstream_url, upstream_port=853):
+        self.client = client
+        self.upstream_hostname = upstream_url
+        self.upstream_port = upstream_port
+
+    def query(self, query_data):
+        context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+        context.verify_mode = ssl.CERT_REQUIRED
+        context.check_hostname = True
+        context.load_default_certs()
+
+        query_data = "\x00".encode() + chr(len(query_data)).encode() + query_data
+
+        with socket.create_connection((self.upstream_hostname, 853)) as sock:
+            with context.wrap_socket(sock, server_hostname=self.upstream_hostname) as wrap_sock:
+                print('version:', wrap_sock.version())
+                wrap_sock.send(query_data)
+
+                query_header = wrap_sock.recv(2)
+                query_length = int.from_bytes(query_header[1:2], "big")
+
+                query_result = wrap_sock.recv(query_length)
+                print('query_result:', query_result)
+                self.client.sendto(query_result, ('127.0.0.1', 10053))
+                wrap_sock.close()
 
 
 class HTTPSUpstream:
@@ -32,11 +62,11 @@ class HTTPSUpstream:
         query_url = self.upstream_url + query_parameters
         query_headers = {}
         query_request = urllib.request.Request(query_url, headers=query_headers)
-        print('query_url: ', query_url)
+        print('query_url:', query_url)
 
         response_data = urllib.request.urlopen(query_request)
         query_result = response_data.read()
-        print('query_result: ', query_result)
+        print('query_result:', query_result)
 
         self.client.sendto(query_result, ('127.0.0.1', 53))
 
