@@ -44,12 +44,12 @@ class Server:
         parse_result = query_parser.parse_plain()
         print('parse_result:', parse_result)
 
-        # https_upstream = upstream.HTTPSUpstream(self.server, 'https://1.1.1.1/dns-query?')
+        # https_upstream = upstream.HTTPSUpstream(self.server, self.port, 'https://1.1.1.1/dns-query?')
         # https_upstream.query(query_data)
-        # plain_upstream = upstream.PlainUpstream(self.server, '1.1.1.1')
+        # plain_upstream = upstream.PlainUpstream(self.server, self.port, '1.1.1.1')
         # plain_upstream.query(query_data)
 
-        tls_upstream = upstream.TLSUpstream(self.server, 'dns.google')
+        tls_upstream = upstream.TLSUpstream(self.server, self.port, 'dns.google')
         tls_upstream.query(query_data)
 
     @staticmethod

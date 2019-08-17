@@ -6,7 +6,7 @@ import urllib.request
 
 
 class PlainUpstream:
-    def __init__(self, client, upstream_ip, upstream_port=53):
+    def __init__(self, client, port, upstream_ip, upstream_port=53):
         self.upstream_ip = upstream_ip
         self.upsream_port = upstream_port
         self.client = client
@@ -19,7 +19,7 @@ class PlainUpstream:
 
 
 class TLSUpstream:
-    def __init__(self, client, upstream_url, upstream_port=853):
+    def __init__(self, client, port, upstream_url, upstream_port=853):
         self.client = client
         self.upstream_hostname = upstream_url
         self.upstream_port = upstream_port
@@ -47,7 +47,7 @@ class TLSUpstream:
 
 
 class HTTPSUpstream:
-    def __init__(self, client, upstream_url):
+    def __init__(self, client, port, upstream_url):
         self.upstream_url = upstream_url
         self.client = client
 
