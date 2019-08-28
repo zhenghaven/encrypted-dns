@@ -31,5 +31,3 @@ class Log:
     def close(self):
         self.log_file.close()
         self.log_file = None
-
-
