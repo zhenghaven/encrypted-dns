@@ -1,12 +1,12 @@
 import base64
-import ssl
 import socket
+import ssl
 import urllib.parse
 import urllib.request
 
 
 class PlainUpstream:
-    def __init__(self, client, port, upstream_ip, upstream_port=53):
+    def __init__(self, client, upstream_ip, upstream_port=53):
         self.upstream_ip = upstream_ip
         self.upsream_port = upstream_port
         self.client = client
@@ -21,6 +21,7 @@ class PlainUpstream:
 class TLSUpstream:
     def __init__(self, client, port, upstream_url, upstream_port=853):
         self.client = client
+        self.port = port
         self.upstream_hostname = upstream_url
         self.upstream_port = upstream_port
 
@@ -42,7 +43,7 @@ class TLSUpstream:
 
                 query_result = wrap_sock.recv(query_length)
                 print('query_result:', query_result)
-                self.client.sendto(query_result, ('127.0.0.1', 10053))
+                self.client.sendto(query_result, ('127.0.0.1', self.port))
                 wrap_sock.close()
 
 
@@ -50,6 +51,7 @@ class HTTPSUpstream:
     def __init__(self, client, port, upstream_url):
         self.upstream_url = upstream_url
         self.client = client
+        self.port = port
 
     def query(self, query_data):
         base64_query_string = self.struct_query(query_data)
@@ -59,7 +61,7 @@ class HTTPSUpstream:
         print('base64_query_string:', base64_query_string)
 
         query_parameters = urllib.parse.urlencode({'dns': base64_query_string, 'ct': 'application/dns-message'})
-        query_url = self.upstream_url + query_parameters
+        query_url = self.upstream_url + '?' + query_parameters
         query_headers = {}
         query_request = urllib.request.Request(query_url, headers=query_headers)
         print('query_url:', query_url)
@@ -68,7 +70,7 @@ class HTTPSUpstream:
         query_result = response_data.read()
         print('query_result:', query_result)
 
-        self.client.sendto(query_result, ('127.0.0.1', 53))
+        self.client.sendto(query_result, ('127.0.0.1', self.port))
 
     @staticmethod
     def struct_query(query_data):
