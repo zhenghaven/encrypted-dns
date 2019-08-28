@@ -1,3 +1,4 @@
+import random
 import socket
 
 from encrypted_dns import parse, upstream
@@ -5,14 +6,13 @@ from encrypted_dns import parse, upstream
 
 class Server:
 
-    def __init__(self, ip="0.0.0.0", port=10053):
-        self.ip = ip
-        self.port = port
+    def __init__(self, dns_config_object):
+        self.dns_config = dns_config_object.get_config()
         self.server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.dns_map = {}
 
     def start(self):
-        self.server.bind((self.ip, self.port))
+        self.server.bind((self.dns_config['listen_address'], self.dns_config['listen_port']))
 
         while True:
             recv_data, recv_address = self.server.recvfrom(512)
@@ -44,15 +44,41 @@ class Server:
         parse_result = query_parser.parse_plain()
         print('parse_result:', parse_result)
 
-        # https_upstream = upstream.HTTPSUpstream(self.server, self.port, 'https://1.1.1.1/dns-query?')
+        # https_upstream = upstream.HTTPSUpstream(self.server, self.dns_config['listen_port'], 'https://1.1.1.1/dns-query?')
         # https_upstream.query(query_data)
-        # plain_upstream = upstream.PlainUpstream(self.server, self.port, '1.1.1.1')
+        # plain_upstream = upstream.PlainUpstream(self.server, self.dns_config['listen_port'], '1.1.1.1')
         # plain_upstream.query(query_data)
+        # tls_upstream = upstream.TLSUpstream(self.server, self.dns_config['listen_port'], 'dns.google')
+        # tls_upstream.query(query_data)
 
-        tls_upstream = upstream.TLSUpstream(self.server, self.port, 'dns.google')
-        tls_upstream.query(query_data)
+        upstream_object = self.select_upstream()
+        upstream_object.query(query_data)
+
+    def select_upstream(self):
+        upstream_dns_list = self.dns_config['upstream_dns']
+        enable_weight = self.dns_config['upstream_weight']
+        upstream_timeout = self.dns_config['upstream_timeout']
+
+        if enable_weight:
+            upstream_dns = random.choice(upstream_dns_list)
+        else:
+            upstream_dns = random.choice(upstream_dns_list)
+
+        server = self.server
+        protocol = upstream_dns['protocol']
+        address = upstream_dns['address']
+        port = upstream_dns['port']
+        upstream_object = None
+
+        if protocol == 'plain':
+            upstream_object = upstream.PlainUpstream(server, address, port)
+        elif protocol == 'https':
+            upstream_object = upstream.HTTPSUpstream(server, self.dns_config['listen_port'], address)
+        elif protocol == 'tls':
+            upstream_object = upstream.TLSUpstream(server, self.dns_config['listen_port'], address, port)
+
+        return upstream_object
 
     @staticmethod
     def handle_response(self):
         pass
-
