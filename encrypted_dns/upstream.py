@@ -6,24 +6,27 @@ import urllib.request
 
 
 class PlainUpstream:
-    def __init__(self, client, upstream_ip, upstream_port=53):
+    def __init__(self, client, upstream_ip, upstream_timeout, upstream_port=53):
         self.upstream_ip = upstream_ip
         self.upsream_port = upstream_port
         self.client = client
+        self.upstream_timeout = upstream_timeout
 
     def query(self, query_data):
         self._send(query_data)
 
     def _send(self, message_data):
+        self.client.settimeout(self.upstream_timeout)
         self.client.sendto(message_data, (self.upstream_ip, self.upsream_port))
 
 
 class TLSUpstream:
-    def __init__(self, client, port, upstream_url, upstream_port=853):
+    def __init__(self, client, port, upstream_url, upstream_timeout, upstream_port=853):
         self.client = client
         self.port = port
         self.upstream_hostname = upstream_url
         self.upstream_port = upstream_port
+        self.upstream_timeout = upstream_timeout
 
     def query(self, query_data):
         context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
@@ -33,7 +36,7 @@ class TLSUpstream:
 
         query_data = "\x00".encode() + chr(len(query_data)).encode() + query_data
 
-        with socket.create_connection((self.upstream_hostname, 853)) as sock:
+        with socket.create_connection((self.upstream_hostname, 853), timeout=self.upstream_timeout) as sock:
             with context.wrap_socket(sock, server_hostname=self.upstream_hostname) as wrap_sock:
                 print('version:', wrap_sock.version())
                 wrap_sock.send(query_data)
@@ -48,8 +51,9 @@ class TLSUpstream:
 
 
 class HTTPSUpstream:
-    def __init__(self, client, port, upstream_url):
+    def __init__(self, client, port, upstream_url, upstream_timeout):
         self.upstream_url = upstream_url
+        self.upstream_timeout = upstream_timeout
         self.client = client
         self.port = port
 
@@ -66,7 +70,7 @@ class HTTPSUpstream:
         query_request = urllib.request.Request(query_url, headers=query_headers)
         print('query_url:', query_url)
 
-        response_data = urllib.request.urlopen(query_request)
+        response_data = urllib.request.urlopen(query_request, timeout=self.upstream_timeout)
         query_result = response_data.read()
         print('query_result:', query_result)
 
