@@ -40,46 +40,7 @@ class ParseHeader:
 
         return flags
 
-
-class ParseQuery:
-    def __init__(self, query_data):
-        self.data = query_data
-
-    def parse_plain(self):
-        query_data = self.data
-
-        header = ParseHeader.parse_header(query_data)
-
-        question = self.parse_question(query_data[12:])
-        answer = {}
-
-        parsed_result = [header, question, answer]
-        return parsed_result
-
-    @staticmethod
-    def parse_flags(flags_data):
-        qr = utils.get_bit_from_byte(flags_data[:1], 0)
-        qpcode = utils.get_bit_from_byte(flags_data[:1], 1, 4)
-        aa = utils.get_bit_from_byte(flags_data[:1], 5)
-        tc = utils.get_bit_from_byte(flags_data[:1], 6)
-        rd = utils.get_bit_from_byte(flags_data[:1], 7)
-        ra = utils.get_bit_from_byte(flags_data[1:2], 0)
-        z = utils.get_bit_from_byte(flags_data[1:2], 1, 3)
-        rcode = utils.get_bit_from_byte(flags_data[1:2], 4, 7)
-
-        flags = {
-            'QR': qr,
-            'OPCODE': qpcode,
-            'AA': aa,
-            'TC': tc,
-            'RD': rd,
-            'RA': ra,
-            'Z': z,
-            'RCODE': rcode
-        }
-
-        return flags
-
+class ParseQuestion:
     @staticmethod
     def parse_question(question_data):
         state = False
@@ -115,10 +76,10 @@ class ParseQuery:
 
         question = {
             'QNAME': qname,
-            'QTYPE': ParseQuery.get_query_type(int.from_bytes(qtype, byteorder='big')),
-            'QCLASS': ParseQuery.get_query_class(int.from_bytes(qclass, byteorder='big'))
+            'QTYPE': ParseQuestion.get_query_type(int.from_bytes(qtype, byteorder='big')),
+            'QCLASS': ParseQuestion.get_query_class(int.from_bytes(qclass, byteorder='big'))
         }
-        return question
+        return question, domain_end_point + 4
 
     @staticmethod
     def get_query_type(qtype):
@@ -163,6 +124,28 @@ class ParseQuery:
         }
 
         return qclass_dict[qclass]
+
+
+class ParseAnswer:
+    @staticmethod
+    def parse_answer(data, end_point, answer_count):
+        answer_data = data[end_point:]
+
+
+class ParseQuery:
+    def __init__(self, query_data):
+        self.data = query_data
+
+    def parse_plain(self):
+        query_data = self.data
+
+        header = ParseHeader.parse_header(query_data[:12])
+        question, question_end_point = ParseQuestion.parse_question(query_data[12:])
+        answer_count = header['answer_count']
+        answer = {}
+
+        parsed_result = [header, question, answer]
+        return parsed_result
 
 
 class ParseResponse:
