@@ -44,13 +44,6 @@ class Server:
         parse_result = query_parser.parse_plain()
         print('parse_result:', parse_result)
 
-        # https_upstream = upstream.HTTPSUpstream(self.server, self.dns_config['listen_port'], 'https://1.1.1.1/dns-query?')
-        # https_upstream.query(query_data)
-        # plain_upstream = upstream.PlainUpstream(self.server, self.dns_config['listen_port'], '1.1.1.1')
-        # plain_upstream.query(query_data)
-        # tls_upstream = upstream.TLSUpstream(self.server, self.dns_config['listen_port'], 'dns.google')
-        # tls_upstream.query(query_data)
-
         upstream_object = self.select_upstream()
         upstream_object.query(query_data)
 
@@ -58,9 +51,12 @@ class Server:
         upstream_dns_list = self.dns_config['upstream_dns']
         enable_weight = self.dns_config['upstream_weight']
         upstream_timeout = self.dns_config['upstream_timeout']
+        weight_list = []
 
         if enable_weight:
-            upstream_dns = random.choice(upstream_dns_list)
+            for item in upstream_dns_list:
+                weight_list.append(item['weight'])
+            upstream_dns = random.choice(upstream_dns_list, weight_list)
         else:
             upstream_dns = random.choice(upstream_dns_list)
 
@@ -71,11 +67,12 @@ class Server:
         upstream_object = None
 
         if protocol == 'plain':
-            upstream_object = upstream.PlainUpstream(server, address, port)
+            upstream_object = upstream.PlainUpstream(server, address, upstream_timeout, port)
         elif protocol == 'https':
-            upstream_object = upstream.HTTPSUpstream(server, self.dns_config['listen_port'], address)
+            upstream_object = upstream.HTTPSUpstream(server, self.dns_config['listen_port'], address, upstream_timeout)
         elif protocol == 'tls':
-            upstream_object = upstream.TLSUpstream(server, self.dns_config['listen_port'], address, port)
+            upstream_object = upstream.TLSUpstream(server, self.dns_config['listen_port'], address,
+                                                   upstream_timeout, port)
 
         return upstream_object
 
