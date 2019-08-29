@@ -7,7 +7,10 @@ class Config:
     def __init__(self):
         self.DEFAULT_CONFIG = {
             'enable_log': True,
-
+            'enable_ipv6': False,
+            'enable_cookie': False,
+            'enable_ecs': True,
+            'enable_cache': True,
             'listen_address': "0.0.0.0",
             'listen_port': 53,
 
@@ -57,11 +60,7 @@ class Config:
             'client_blacklist': [
                 '192.168.1.1',
                 '172.0.0.0'
-            ],
-
-            'enable_ipv6': False,
-            'enable_cookie': False,
-            'enable_ecs': True,
+            ]
         }
 
         self.config = {}
