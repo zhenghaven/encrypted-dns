@@ -20,12 +20,14 @@ class Config:
                 {
                     'protocol': 'https',
                     'address': 'https://cloudflare-dns.com/dns-query',
+                    'ip': '1.1.1.1',
                     'port': 443,
                     'weight': 50
                 },
                 {
                     'protocol': 'tls',
                     'address': 'dns.google',
+                    'ip': '8.8.8.8',
                     'port': 853,
                     'weight': 50
                 },

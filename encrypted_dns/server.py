@@ -1,7 +1,7 @@
 import random
 import socket
 
-from encrypted_dns import parse, upstream
+from encrypted_dns import parse, upstream, utils
 
 
 class Server:
@@ -10,6 +10,24 @@ class Server:
         self.dns_config = dns_config_object.get_config()
         self.server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.dns_map = {}
+
+    def check_config(self):
+        bootstrap_dns_address = self.dns_config['bootstrap_dns_address']['address']
+        bootstrap_dns_port = self.dns_config['bootstrap_dns_address']['port']
+
+        for item in self.dns_config['upstream_dns']:
+            if item['protocol'] == 'https' or item['protocol'] == 'tls':
+                address = item['address'].lstrip('https://')
+                address = address.rstrip('/dns-query')
+
+                if not utils.is_valid_ipv4_address(address):
+                    if 'ip' not in item or item['ip'] == '':
+                        item['ip'] = self.get_ip_address(address, bootstrap_dns_address, bootstrap_dns_port)
+
+    @staticmethod
+    def get_ip_address(address, bootstrap_dns_address, bootstrap_dns_port):
+
+        return ''
 
     def start(self):
         self.server.bind((self.dns_config['listen_address'], self.dns_config['listen_port']))
