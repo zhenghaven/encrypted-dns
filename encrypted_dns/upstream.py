@@ -18,6 +18,7 @@ class PlainUpstream:
     def _send(self, message_data):
         self.client.settimeout(self.upstream_timeout)
         self.client.sendto(message_data, (self.upstream_ip, self.upsream_port))
+        self.client.settimeout(socket.getdefaulttimeout())
 
 
 class TLSUpstream:
