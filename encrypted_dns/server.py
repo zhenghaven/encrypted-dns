@@ -20,13 +20,11 @@ class Server:
 
         for item in self.dns_config['upstream_dns']:
             if item['protocol'] == 'https' or item['protocol'] == 'tls':
-                address = item['address'].lstrip('https://')
-                address = address.rstrip('/dns-query')
+                address = item['address']
                 if not utils.is_valid_ipv4_address(address):
                     if 'ip' not in item or item['ip'] == '':
                         item['ip'] = self.get_ip_address(address, bootstrap_dns_address,
                                                          bootstrap_dns_port, self.dns_config['upstream_timeout'])
-                        print(item['ip'])
 
     def start(self):
         while True:
@@ -71,7 +69,8 @@ class Server:
         if enable_weight:
             for item in upstream_dns_list:
                 weight_list.append(item['weight'])
-            upstream_dns = random.choice(upstream_dns_list, weight_list)
+            upstream_dns = random.choices(population=upstream_dns_list, weights=weight_list, k=1)
+            upstream_dns = upstream_dns[0]
         else:
             upstream_dns = random.choice(upstream_dns_list)
 
