@@ -23,18 +23,13 @@ def get_bit_list_from_integer(n, length):
 
 
 def get_bytes_from_bits(bits):
-    bits = iter(bits)
-    done = False
-    while not done:
-        byte = 0
-        for _ in range(0, 8):
-            try:
-                bit = next(bits)
-            except StopIteration:
-                bit = 0
-                done = True
-            byte = (byte << 1) | bit
-        yield byte
+    index = 7
+    integer = 0
+    for i in bits:
+        integer += i * (2**index)
+        index -= 1
+
+    return integer.to_bytes(2, byteorder='big')
 
 
 def get_bit_from_byte(byte, begin, end=None):
