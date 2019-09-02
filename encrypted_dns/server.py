@@ -1,7 +1,7 @@
 import random
 import socket
 
-from encrypted_dns import parse, upstream, utils
+from encrypted_dns import parse, upstream, utils, struct
 
 
 class Server:
@@ -11,6 +11,9 @@ class Server:
         self.server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.dns_map = {}
 
+        self.server.bind((self.dns_config['listen_address'], self.dns_config['listen_port']))
+        self.check_config()
+
     def check_config(self):
         bootstrap_dns_address = self.dns_config['bootstrap_dns_address']['address']
         bootstrap_dns_port = self.dns_config['bootstrap_dns_address']['port']
@@ -19,19 +22,13 @@ class Server:
             if item['protocol'] == 'https' or item['protocol'] == 'tls':
                 address = item['address'].lstrip('https://')
                 address = address.rstrip('/dns-query')
-
                 if not utils.is_valid_ipv4_address(address):
                     if 'ip' not in item or item['ip'] == '':
-                        item['ip'] = self.get_ip_address(address, bootstrap_dns_address, bootstrap_dns_port)
-
-    @staticmethod
-    def get_ip_address(address, bootstrap_dns_address, bootstrap_dns_port):
-
-        return ''
+                        item['ip'] = self.get_ip_address(address, bootstrap_dns_address,
+                                                         bootstrap_dns_port, self.dns_config['upstream_timeout'])
+                        print(item['ip'])
 
     def start(self):
-        self.server.bind((self.dns_config['listen_address'], self.dns_config['listen_port']))
-
         while True:
             recv_data, recv_address = self.server.recvfrom(512)
             recv_header = parse.ParseHeader.parse_header(recv_data)
@@ -87,10 +84,10 @@ class Server:
         if protocol == 'plain':
             upstream_object = upstream.PlainUpstream(server, address, upstream_timeout, port)
         elif protocol == 'https':
-            upstream_object = upstream.HTTPSUpstream(server, self.dns_config['listen_port'], address, upstream_timeout)
+            upstream_object = upstream.HTTPSUpstream(server, self.dns_config['listen_port'], upstream_dns['ip'], address, upstream_timeout)
         elif protocol == 'tls':
-            upstream_object = upstream.TLSUpstream(server, self.dns_config['listen_port'], address,
-                                                   upstream_timeout, port)
+            upstream_object = upstream.TLSUpstream(server, self.dns_config['listen_port'], upstream_dns['ip'],
+                                                   address, upstream_timeout, port)
 
         return upstream_object
 
@@ -99,3 +96,20 @@ class Server:
         response_parser = parse.ParseResponse(response_data)
         parse_result = response_parser.parse_plain()
         print('response_parse_result:', parse_result)
+        return parse_result
+
+    def get_ip_address(self, address, bootstrap_dns_address, bootstrap_dns_port, upstream_timeout):
+        query_structer = struct.StructQuery(address)
+        query_data, transaction_id = query_structer.struct()
+        self.dns_map[transaction_id] = address
+        upstream_object = upstream.PlainUpstream(self.server, bootstrap_dns_address,
+                                                 upstream_timeout, bootstrap_dns_port)
+        upstream_object.query(query_data)
+        while True:
+            recv_data, recv_address = self.server.recvfrom(512)
+            recv_header = parse.ParseHeader.parse_header(recv_data)
+            if recv_header['flags']['QR'] == '1' and recv_header['transaction_id'] in self.dns_map \
+                    and self.dns_map[recv_header['transaction_id']] == address:
+                response = self.handle_response(recv_data)
+                address = response[2][0]['record']
+                return address
