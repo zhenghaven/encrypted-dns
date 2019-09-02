@@ -60,7 +60,7 @@ class Server:
     def handle_query(self, query_data):
         query_parser = parse.ParseQuery(query_data)
         parse_result = query_parser.parse_plain()
-        print('parse_result:', parse_result)
+        print('query_parse_result:', parse_result)
 
         upstream_object = self.select_upstream()
         upstream_object.query(query_data)
@@ -95,5 +95,7 @@ class Server:
         return upstream_object
 
     @staticmethod
-    def handle_response(self):
-        pass
+    def handle_response(response_data):
+        response_parser = parse.ParseResponse(response_data)
+        parse_result = response_parser.parse_plain()
+        print('response_parse_result:', parse_result)

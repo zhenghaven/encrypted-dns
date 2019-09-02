@@ -40,96 +40,64 @@ class ParseHeader:
 
         return flags
 
+
 class ParseQuestion:
     @staticmethod
     def parse_question(question_data):
-        state = False
-        expected_length = 0
-        domain_string = ''
-        domain_parts = []
-        domain_end_point = 0
-        pointer = 0
-
-        for byte in question_data:
-            if state:
-                pointer += 1
-                domain_string += chr(byte)
-
-                if pointer == expected_length:
-                    domain_parts.append(domain_string)
-                    domain_string = ''
-                    state = False
-                    pointer = 0
-
-                if byte == 0:
-                    domain_parts.append(domain_string)
-                    break
-            else:
-                state = True
-                expected_length = byte
-
-            domain_end_point += 1
-
+        domain_parts, domain_end_point = utils.get_domain_name_from_question_data(question_data)
         qname = domain_parts
         qtype = question_data[domain_end_point:domain_end_point + 2]
-        qclass = question_data[domain_end_point + 2: domain_end_point + 4]
+        qclass = question_data[domain_end_point + 2:domain_end_point + 4]
 
         question = {
             'QNAME': qname,
-            'QTYPE': ParseQuestion.get_query_type(int.from_bytes(qtype, byteorder='big')),
-            'QCLASS': ParseQuestion.get_query_class(int.from_bytes(qclass, byteorder='big'))
+            'QTYPE': utils.get_record_type(int.from_bytes(qtype, byteorder='big')),
+            'QCLASS': utils.get_record_class(int.from_bytes(qclass, byteorder='big'))
         }
+        print(domain_end_point)
         return question, domain_end_point + 4
-
-    @staticmethod
-    def get_query_type(qtype):
-        qtype_dict = {
-            1: 'A',
-            2: 'NS',
-            3: 'MD',
-            4: 'MF',
-            5: 'CNAME',
-            6: 'SOA',
-            7: 'MB',
-            8: 'MG',
-            9: 'MR',
-            10: 'NULL',
-            11: 'WKS',
-            12: 'PTR',
-            13: 'HINFO',
-            14: 'MINFO',
-            15: 'MX',
-            16: 'TXT',
-            28: 'AAAA',
-            33: 'SRV',
-            35: 'NAPTR',
-            48: 'DNSKEY',
-            250: 'TSIG',
-            252: 'AXFR',
-            253: 'MAILB',
-            254: 'MAILA',
-            255: '*',
-            256: 'URI'
-        }
-
-        return qtype_dict[qtype]
-
-    @staticmethod
-    def get_query_class(qclass):
-        qclass_dict = {
-            1: 'In',
-            2: 'CS',
-            3: 'CH',
-            4: 'HS'
-        }
-
-        return qclass_dict[qclass]
 
 
 class ParseAnswer:
     @staticmethod
     def parse_answer(data, end_point, answer_count):
-        answer_data = data[end_point:]
+        answer_list = list()
+        end_point += 12
+
+        for answer in range(answer_count):
+            compression_offset = int.from_bytes(data[end_point:end_point + 2], byteorder='big') - 49152
+            domain_parts, cache_end_point = utils.get_domain_name_from_question_data(data[compression_offset:])
+
+            record_type = utils.get_record_type(int.from_bytes(data[end_point + 2:end_point + 4], byteorder='big'))
+            record_class = utils.get_record_class(int.from_bytes(data[end_point + 4:end_point + 6], byteorder='big'))
+            ttl = int.from_bytes(data[end_point + 6:end_point + 10], byteorder='big')
+            length = int.from_bytes(data[end_point + 10:end_point + 12], byteorder='big')
+            record = data[end_point + 12:end_point + 12 + length]
+
+            end_point = end_point + 12 + length
+
+            if record_type == 'A':
+                address = ''
+                print(record)
+                for i in range(len(record)):
+                    address_split = int.from_bytes(record[i:i + 1], byteorder='big')
+                    print(address_split)
+                    address = address + str(address_split) + '.'
+                record = address.rstrip('.')
+
+            elif record_type == 'CNAME':
+                pass
+
+            answer_list.append(
+                {'domain_name': domain_parts,
+                 'type': record_type,
+                 'class': record_class,
+                 'ttl': ttl,
+                 'length': length,
+                 'record': record
+                 }
+            )
+        return answer_list
 
 
 class ParseQuery:
@@ -141,13 +109,21 @@ class ParseQuery:
 
         header = ParseHeader.parse_header(query_data[:12])
         question, question_end_point = ParseQuestion.parse_question(query_data[12:])
-        answer_count = header['answer_count']
-        answer = {}
 
-        parsed_result = [header, question, answer]
+        parsed_result = [header, question]
         return parsed_result
 
 
 class ParseResponse:
     def __init__(self, response_data):
-        pass
+        self.data = response_data
+
+    def parse_plain(self):
+        response_data = self.data
+
+        header = ParseHeader.parse_header(response_data[:12])
+        question, question_end_point = ParseQuestion.parse_question(response_data[12:])
+        answer_count = header['answer_count']
+        answer = ParseAnswer.parse_answer(response_data, question_end_point, answer_count)
+        parsed_result = [header, question, answer]
+        return parsed_result
