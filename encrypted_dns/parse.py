@@ -54,7 +54,6 @@ class ParseQuestion:
             'QTYPE': utils.get_record_type(int.from_bytes(qtype, byteorder='big')),
             'QCLASS': utils.get_record_class(int.from_bytes(qclass, byteorder='big'))
         }
-        print(domain_end_point)
         return question, domain_end_point + 4
 
 
@@ -78,10 +77,8 @@ class ParseAnswer:
 
             if record_type == 'A':
                 address = ''
-                print(record)
                 for i in range(len(record)):
                     address_split = int.from_bytes(record[i:i + 1], byteorder='big')
-                    print(address_split)
                     address = address + str(address_split) + '.'
                 record = address.rstrip('.')
 
