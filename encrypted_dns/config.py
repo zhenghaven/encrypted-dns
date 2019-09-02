@@ -14,20 +14,20 @@ class Config:
             'listen_address': "0.0.0.0",
             'listen_port': 53,
 
-            'upstream_weight': False,
+            'upstream_weight': True,
             'upstream_timeout': 30,
             'upstream_dns': [
                 {
                     'protocol': 'https',
                     'address': 'cloudflare-dns.com',
-                    'ip': '',
+                    'ip': '1.1.1.1',
                     'port': 443,
                     'weight': 50
                 },
                 {
                     'protocol': 'tls',
                     'address': 'dns.google',
-                    'ip': '',
+                    'ip': '8.8.8.8',
                     'port': 853,
                     'weight': 50
                 },
@@ -35,12 +35,12 @@ class Config:
                     'protocol': 'plain',
                     'address': '1.1.1.1',
                     'port': 53,
-                    'weight': 50
+                    'weight': 0
                 }
             ],
 
             'bootstrap_dns_address': {
-                'address': '8.8.8.8',
+                'address': '1.1.1.1',
                 'port': 53
             },
 
