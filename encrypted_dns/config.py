@@ -19,15 +19,15 @@ class Config:
             'upstream_dns': [
                 {
                     'protocol': 'https',
-                    'address': 'https://cloudflare-dns.com/dns-query',
-                    'ip': '1.1.1.1',
+                    'address': 'cloudflare-dns.com',
+                    'ip': '',
                     'port': 443,
                     'weight': 50
                 },
                 {
                     'protocol': 'tls',
                     'address': 'dns.google',
-                    'ip': '8.8.8.8',
+                    'ip': '',
                     'port': 853,
                     'weight': 50
                 },
@@ -41,7 +41,7 @@ class Config:
 
             'bootstrap_dns_address': {
                 'address': '8.8.8.8',
-                'port': '53'
+                'port': 53
             },
 
             'dns_bypass': [

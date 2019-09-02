@@ -22,11 +22,12 @@ class PlainUpstream:
 
 
 class TLSUpstream:
-    def __init__(self, client, port, upstream_url, upstream_timeout, upstream_port=853):
+    def __init__(self, client, port, upstream_ip, upstream_url, upstream_timeout, upstream_port=853):
         self.client = client
         self.port = port
         self.upstream_hostname = upstream_url
         self.upstream_port = upstream_port
+        self.upstream_ip = upstream_ip
         self.upstream_timeout = upstream_timeout
 
     def query(self, query_data):
@@ -37,7 +38,7 @@ class TLSUpstream:
 
         query_data = "\x00".encode() + chr(len(query_data)).encode() + query_data
 
-        with socket.create_connection((self.upstream_hostname, 853), timeout=self.upstream_timeout) as sock:
+        with socket.create_connection((self.upstream_ip, 853), timeout=self.upstream_timeout) as sock:
             with context.wrap_socket(sock, server_hostname=self.upstream_hostname) as wrap_sock:
                 print('version:', wrap_sock.version())
                 wrap_sock.send(query_data)
@@ -52,9 +53,10 @@ class TLSUpstream:
 
 
 class HTTPSUpstream:
-    def __init__(self, client, port, upstream_url, upstream_timeout):
+    def __init__(self, client, port, upstream_ip, upstream_url, upstream_timeout):
         self.upstream_url = upstream_url
         self.upstream_timeout = upstream_timeout
+        self.upstream_ip = upstream_ip
         self.client = client
         self.port = port
 
@@ -66,8 +68,8 @@ class HTTPSUpstream:
         print('base64_query_string:', base64_query_string)
 
         query_parameters = urllib.parse.urlencode({'dns': base64_query_string, 'ct': 'application/dns-message'})
-        query_url = self.upstream_url + '?' + query_parameters
-        query_headers = {}
+        query_url = 'https://' + self.upstream_ip + '/dns-query?' + query_parameters
+        query_headers = {'host': self.upstream_url}
         query_request = urllib.request.Request(query_url, headers=query_headers)
         print('query_url:', query_url)
 
