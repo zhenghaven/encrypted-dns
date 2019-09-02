@@ -17,7 +17,7 @@ def is_valid_ipv4_address(address):
 def get_bit_list_from_integer(n, length):
     bit_list = [1 if digit == '1' else 0 for digit in bin(n)[2:]]
     if len(bit_list) < length:
-        for i in range(length - len(bit_list) - 1):
+        for i in range(length - len(bit_list)):
             bit_list.insert(0, 0)
     return bit_list
 
@@ -29,7 +29,7 @@ def get_bytes_from_bits(bits):
         integer += i * (2**index)
         index -= 1
 
-    return integer.to_bytes(2, byteorder='big')
+    return integer.to_bytes(1, byteorder='big')
 
 
 def get_bit_from_byte(byte, begin, end=None):
