@@ -108,14 +108,14 @@ def get_record_type(record_type):
         256: 'URI'
     }
 
-    result = None
-    if isinstance(record_type, int):
-        result = record_type_dict[record_type]
+    if isinstance(record_type, int) and record_type in record_type_dict:
+        return record_type_dict[record_type]
     elif isinstance(record_type, str):
         reverse_dict = dict((v, k) for k, v in record_type_dict.items())
-        result = reverse_dict[record_type]
-
-    return result
+        if record_type in reverse_dict:
+            return reverse_dict[record_type]
+    else:
+        return ''
 
 
 def get_record_class(record_class):
@@ -123,15 +123,14 @@ def get_record_class(record_class):
         1: 'IN',
         2: 'CS',
         3: 'CH',
-        4: 'HS',
-        255: '*'
+        4: 'HS'
     }
 
-    result = None
-    if isinstance(record_class, int):
-        result = record_class_dict[record_class]
+    if isinstance(record_class, int) and record_class in record_class_dict:
+        return record_class_dict[record_class]
     elif isinstance(record_class, str):
         reverse_dict = dict((v, k) for k, v in record_class_dict.items())
-        result = reverse_dict[record_class]
-
-    return result
+        if record_class in reverse_dict:
+            return reverse_dict[record_class]
+    else:
+        return ''
