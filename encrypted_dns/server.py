@@ -1,6 +1,7 @@
 import random
 import socket
-
+import ssl
+import http.client
 from encrypted_dns import parse, upstream, utils, struct
 
 
@@ -10,6 +11,7 @@ class Server:
         self.dns_config = dns_config_object.get_config()
         self.server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.dns_map = {}
+        self.upstream_shake_hand = {}
 
         self.server.bind((self.dns_config['listen_address'], self.dns_config['listen_port']))
         self.check_config()
@@ -25,6 +27,23 @@ class Server:
                     if 'ip' not in item or item['ip'] == '':
                         item['ip'] = self.get_ip_address(address, bootstrap_dns_address,
                                                          bootstrap_dns_port, self.dns_config['upstream_timeout'])
+
+                self.upstream_shake_hand[address] = self.shake_hand(item)
+
+    def shake_hand(self, item):
+        if item['protocol'] == 'https':
+            https_connection = http.client.HTTPSConnection(item['ip'], item['port'],
+                                                           timeout=self.dns_config['upstream_timeout'])
+            return https_connection
+
+        if item['protocol'] == 'tls':
+            context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+            context.verify_mode = ssl.CERT_REQUIRED
+            context.check_hostname = True
+            context.load_default_certs()
+            with socket.create_connection((item['ip'], 853), timeout=self.dns_config['upstream_timeout']) as sock:
+                wrap_sock = context.wrap_socket(sock, server_hostname=item['address'])
+                return wrap_sock
 
     def start(self):
         while True:
@@ -83,10 +102,11 @@ class Server:
         if protocol == 'plain':
             upstream_object = upstream.PlainUpstream(server, address, upstream_timeout, port)
         elif protocol == 'https':
-            upstream_object = upstream.HTTPSUpstream(server, self.dns_config['listen_port'], upstream_dns['ip'], address, upstream_timeout)
+            upstream_object = upstream.HTTPSUpstream(server, self.dns_config['listen_port'],
+                                                     address, self.upstream_shake_hand[address])
         elif protocol == 'tls':
-            upstream_object = upstream.TLSUpstream(server, self.dns_config['listen_port'], upstream_dns['ip'],
-                                                   address, upstream_timeout, port)
+            upstream_object = upstream.TLSUpstream(server, self.dns_config['listen_port'],
+                                                   self.upstream_shake_hand[address])
 
         return upstream_object
 
