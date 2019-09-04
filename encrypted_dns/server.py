@@ -11,7 +11,7 @@ class Server:
         self.dns_config = dns_config_object.get_config()
         self.server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.dns_map = {}
-        self.upstream_shake_hand = {}
+        self.upstream_object = {'https': {}, 'tls': {}}
 
         self.server.bind((self.dns_config['listen_address'], self.dns_config['listen_port']))
         self.check_config()
@@ -21,14 +21,15 @@ class Server:
         bootstrap_dns_port = self.dns_config['bootstrap_dns_address']['port']
 
         for item in self.dns_config['upstream_dns']:
-            if item['protocol'] == 'https' or item['protocol'] == 'tls':
-                address = item['address']
+            protocol = item['protocol']
+            address = item['address']
+            if protocol == 'https' or protocol == 'tls':
                 if not utils.is_valid_ipv4_address(address):
                     if 'ip' not in item or item['ip'] == '':
                         item['ip'] = self.get_ip_address(address, bootstrap_dns_address,
                                                          bootstrap_dns_port, self.dns_config['upstream_timeout'])
 
-                self.upstream_shake_hand[address] = self.shake_hand(item)
+                self.upstream_object[protocol][address] = self.shake_hand(item)
 
     def shake_hand(self, item):
         if item['protocol'] == 'https':
@@ -37,13 +38,10 @@ class Server:
             return https_connection
 
         if item['protocol'] == 'tls':
-            context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
-            context.verify_mode = ssl.CERT_REQUIRED
-            context.check_hostname = True
-            context.load_default_certs()
-            with socket.create_connection((item['ip'], 853), timeout=self.dns_config['upstream_timeout']) as sock:
-                wrap_sock = context.wrap_socket(sock, server_hostname=item['address'])
-                return wrap_sock
+            tls_upstream = upstream.TLSUpstream(self.server, self.dns_config['listen_port'],
+                                                item, self.dns_config['upstream_timeout'])
+            tls_upstream.shake_hand()
+            return tls_upstream
 
     def start(self):
         while True:
@@ -103,10 +101,9 @@ class Server:
             upstream_object = upstream.PlainUpstream(server, address, upstream_timeout, port)
         elif protocol == 'https':
             upstream_object = upstream.HTTPSUpstream(server, self.dns_config['listen_port'],
-                                                     address, self.upstream_shake_hand[address])
+                                                     address, self.upstream_object['https'][address])
         elif protocol == 'tls':
-            upstream_object = upstream.TLSUpstream(server, self.dns_config['listen_port'],
-                                                   self.upstream_shake_hand[address])
+            upstream_object = self.upstream_object['tls'][address]
 
         return upstream_object
 
