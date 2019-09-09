@@ -1,7 +1,8 @@
 import base64
+import http.client
 import socket
-import threading
 import ssl
+import threading
 
 
 class PlainUpstream:
@@ -47,37 +48,49 @@ class TLSUpstream:
 
     def receive(self):
         while True:
-            query_header = self.wrap_sock.recv(2)
-            query_length = int.from_bytes(query_header[1:2], "big")
+            try:
+                query_header = self.wrap_sock.recv(2)
+                query_length = int.from_bytes(query_header[1:2], "big")
 
-            query_result = self.wrap_sock.recv(query_length)
-            print('query_result:', query_result)
-            self.client.sendto(query_result, ('127.0.0.1', self.port))
+                query_result = self.wrap_sock.recv(query_length)
+                print('query_result:', query_result)
+                self.client.sendto(query_result, ('127.0.0.1', self.port))
+            except BaseException as exc:
+                print('error:', str(exc))
 
 
 class HTTPSUpstream:
-    def __init__(self, client, port, upstream_url, https_connection):
+    def __init__(self, client, port, item, timeout):
         self.client = client
         self.port = port
-        self.upstream_url = upstream_url
-        self.https_connection = https_connection
+        self.item = item
+        self.upstream_url = item['address']
+        self.timeout = timeout
 
     def query(self, query_data):
         base64_query_string = self.struct_query(query_data)
         base64_query_string = base64_query_string.replace('=', '')
         base64_query_string = base64_query_string.replace('+', '-')
         base64_query_string = base64_query_string.replace('/', '_')
-        print('base64_query_string:', base64_query_string)
 
         query_parameters = '?dns=' + base64_query_string + '&ct=application/dns-message'
         query_url = '/dns-query' + query_parameters
         query_headers = {'host': self.upstream_url}
-        self.https_connection.request('GET', query_url, headers=query_headers)
-        response_object = self.https_connection.getresponse()
-        query_result = response_object.read()
-        print('query_result:', query_result)
+        print('query_url:', query_url)
+        receive_thread = threading.Thread(target=self.receive, args=(query_url, query_headers))
+        receive_thread.daemon = True
+        receive_thread.start()
 
-        self.client.sendto(query_result, ('127.0.0.1', self.port))
+    def receive(self, query_url, query_headers):
+        try:
+            https_connection = http.client.HTTPSConnection(self.item['ip'], self.item['port'], timeout=self.timeout)
+            https_connection.request('GET', query_url, headers=query_headers)
+            response_object = https_connection.getresponse()
+            query_result = response_object.read()
+            print('query_result:', query_result)
+            self.client.sendto(query_result, ('127.0.0.1', self.port))
+        except BaseException as exc:
+            print('error:', str(exc))
 
     @staticmethod
     def struct_query(query_data):

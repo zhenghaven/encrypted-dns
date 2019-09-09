@@ -1,7 +1,5 @@
 import random
 import socket
-import ssl
-import http.client
 from encrypted_dns import parse, upstream, utils, struct
 
 
@@ -33,9 +31,9 @@ class Server:
 
     def shake_hand(self, item):
         if item['protocol'] == 'https':
-            https_connection = http.client.HTTPSConnection(item['ip'], item['port'],
-                                                           timeout=self.dns_config['upstream_timeout'])
-            return https_connection
+            https_upstream = upstream.HTTPSUpstream(self.server, self.dns_config['listen_port'],
+                                                    item, self.dns_config['upstream_timeout'])
+            return https_upstream
 
         if item['protocol'] == 'tls':
             tls_upstream = upstream.TLSUpstream(self.server, self.dns_config['listen_port'],
@@ -100,8 +98,7 @@ class Server:
         if protocol == 'plain':
             upstream_object = upstream.PlainUpstream(server, address, upstream_timeout, port)
         elif protocol == 'https':
-            upstream_object = upstream.HTTPSUpstream(server, self.dns_config['listen_port'],
-                                                     address, self.upstream_object['https'][address])
+            upstream_object = self.upstream_object['https'][address]
         elif protocol == 'tls':
             upstream_object = self.upstream_object['tls'][address]
 
