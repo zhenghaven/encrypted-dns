@@ -1,6 +1,7 @@
 import random
 import socket
 from encrypted_dns import parse, upstream, utils, struct
+import threading
 
 
 class Server:
@@ -38,7 +39,6 @@ class Server:
         if item['protocol'] == 'tls':
             tls_upstream = upstream.TLSUpstream(self.server, self.dns_config['listen_port'],
                                                 item, self.dns_config['upstream_timeout'])
-            tls_upstream.shake_hand()
             return tls_upstream
 
     def start(self):
@@ -52,7 +52,9 @@ class Server:
 
             if recv_header['flags']['QR'] == '0':
                 self.dns_map[transaction_id] = recv_address
-                self.handle_query(recv_data)
+                query_thread = threading.Thread(target=self.handle_query, args=(recv_data,))
+                # query_thread.daemon = True
+                query_thread.start()
 
             if recv_header['flags']['QR'] == '1':
                 if transaction_id in self.dns_map:
