@@ -2,7 +2,7 @@ import os
 from time import gmtime, strftime
 
 
-class Log:
+class Logger:
     def __init__(self):
         self.init_time = self.get_time()
         self.log_file = None
@@ -25,7 +25,7 @@ class Log:
 
     def write_log(self, message):
         time = self.get_time()
-        self.log_file.write(time + ": " + message)
+        self.log_file.write("[" + time + "] " + message)
         self.log_file.write('\n')
 
     def close(self):
