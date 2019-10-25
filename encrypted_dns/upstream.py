@@ -2,7 +2,6 @@ import base64
 import http.client
 import socket
 import ssl
-import threading
 
 
 class PlainUpstream:
@@ -29,23 +28,25 @@ class TLSUpstream:
         self.timeout = timeout
 
     def query(self, query_data):
-        context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
-        context.verify_mode = ssl.CERT_REQUIRED
-        context.check_hostname = True
-        context.load_default_certs()
-        with socket.create_connection((self.item['ip'], self.item['port']), timeout=self.timeout) as sock:
-            wrap_sock = context.wrap_socket(sock, server_hostname=self.item['address'])
+        try:
+            context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+            context.verify_mode = ssl.CERT_REQUIRED
+            context.check_hostname = True
+            context.load_default_certs()
+            with socket.create_connection((self.item['ip'], self.item['port']), timeout=self.timeout) as sock:
+                wrap_sock = context.wrap_socket(sock, server_hostname=self.item['address'])
 
-        query_data = "\x00".encode() + chr(len(query_data)).encode() + query_data
-        print('version:', wrap_sock.version())
-        wrap_sock.send(query_data)
+            query_data = "\x00".encode() + chr(len(query_data)).encode() + query_data
+            wrap_sock.send(query_data)
 
-        query_header = wrap_sock.recv(2)
-        query_length = int.from_bytes(query_header[1:2], "big")
+            query_header = wrap_sock.recv(2)
+            query_length = int.from_bytes(query_header[1:2], "big")
 
-        query_result = wrap_sock.recv(query_length)
-        print('query_result:', query_result)
-        self.client.sendto(query_result, ('127.0.0.1', self.port))
+            query_result = wrap_sock.recv(query_length)
+            self.client.sendto(query_result, ('127.0.0.1', self.port))
+
+        except socket.timeout:
+            print('[Error]', self.item['address'] + ': socket timeout.')
 
 
 class HTTPSUpstream:
@@ -65,7 +66,6 @@ class HTTPSUpstream:
         query_parameters = '?dns=' + base64_query_string + '&ct=application/dns-message'
         query_url = '/dns-query' + query_parameters
         query_headers = {'host': self.upstream_url}
-        print('query_url:', query_url)
         self.receive(query_url, query_headers)
 
     def receive(self, query_url, query_headers):
@@ -74,10 +74,9 @@ class HTTPSUpstream:
             https_connection.request('GET', query_url, headers=query_headers)
             response_object = https_connection.getresponse()
             query_result = response_object.read()
-            print('query_result:', query_result)
             self.client.sendto(query_result, ('127.0.0.1', self.port))
-        except BaseException as exc:
-            print('error:', str(exc))
+        except socket.timeout:
+            print('[Error]', self.item['address'] + ': socket timeout.')
 
     @staticmethod
     def struct_query(query_data):
