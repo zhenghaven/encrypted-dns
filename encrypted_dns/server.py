@@ -1,6 +1,6 @@
 import random
 import socket
-from encrypted_dns import parse, upstream, utils, struct
+from encrypted_dns import parse, upstream, utils, struct, log
 import threading
 
 
@@ -11,9 +11,13 @@ class Server:
         self.server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.dns_map = {}
         self.upstream_object = {'https': {}, 'tls': {}}
-
+        self.enable_log = self.dns_config['enable_log']
         self.server.bind((self.dns_config['listen_address'], self.dns_config['listen_port']))
         self.check_config()
+
+        if self.enable_log:
+            self.logger = log.Logger()
+            self.logger.create_log()
 
     def check_config(self):
         bootstrap_dns_address = self.dns_config['bootstrap_dns_address']['address']
@@ -45,15 +49,17 @@ class Server:
         while True:
             recv_data, recv_address = self.server.recvfrom(512)
             recv_header = parse.ParseHeader.parse_header(recv_data)
-            print('recv_data:', recv_data)
+            if self.enable_log:
+                self.logger.write_log('recv_data:' + str(recv_data))
 
             transaction_id = recv_header['transaction_id']
-            print('transaction_id:', transaction_id)
+            if self.enable_log:
+                self.logger.write_log('transaction_id:' + str(transaction_id))
 
             if recv_header['flags']['QR'] == '0':
                 self.dns_map[transaction_id] = recv_address
                 query_thread = threading.Thread(target=self.handle_query, args=(recv_data,))
-                # query_thread.daemon = True
+                query_thread.daemon = True
                 query_thread.start()
 
             if recv_header['flags']['QR'] == '1':
@@ -64,15 +70,16 @@ class Server:
                 else:
                     pass
 
-                self.handle_response(recv_data)
+                # self.handle_response(recv_data)
 
     def _send(self, response_data, address):
         self.server.sendto(response_data, address)
 
     def handle_query(self, query_data):
-        query_parser = parse.ParseQuery(query_data)
-        parse_result = query_parser.parse_plain()
-        print('query_parse_result:', parse_result)
+        # query_parser = parse.ParseQuery(query_data)
+        # parse_result = query_parser.parse_plain()
+        # if self.enable_log:
+        #   self.logger.write_log('query_parse_result:' + str(parse_result))
 
         upstream_object = self.select_upstream()
         upstream_object.query(query_data)
@@ -106,11 +113,11 @@ class Server:
 
         return upstream_object
 
-    @staticmethod
-    def handle_response(response_data):
+    def handle_response(self, response_data):
         response_parser = parse.ParseResponse(response_data)
         parse_result = response_parser.parse_plain()
-        print('response_parse_result:', parse_result)
+        if self.enable_log:
+            self.logger.write_log('response_parse_result:' + str(parse_result))
         return parse_result
 
     def get_ip_address(self, address, bootstrap_dns_address, bootstrap_dns_port, upstream_timeout):
