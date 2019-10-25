@@ -113,3 +113,7 @@ dmypy.json
 # PyCharm cache
 
 .idea/
+
+# Encrypted-DNS
+
+log/*
