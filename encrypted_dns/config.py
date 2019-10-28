@@ -7,7 +7,7 @@ class Config:
     def __init__(self):
         self.DEFAULT_CONFIG = {
             'enable_log': False,
-            # 'enable_cache': True,
+            'enable_cache': True,
             'listen_address': "0.0.0.0",
             'listen_port': 53,
 
@@ -84,11 +84,12 @@ class Config:
         file_init = os.path.isfile(self.file_name)
         if not file_init:
             self.config = self.get_default_config()
+            self.save()
         else:
             config_file = open(self.file_name)
             self.config = json.loads(config_file.read())
 
     def save(self):
-        config_json = json.dumps(self.config)
+        config_json = json.dumps(self.config, indent=4)
         config_file = open(self.file_name, "w")
         config_file.write(config_json)
