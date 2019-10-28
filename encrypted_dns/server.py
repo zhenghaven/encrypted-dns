@@ -1,6 +1,7 @@
 import random
 import socket
 import threading
+import time
 
 from encrypted_dns import parse, upstream, utils, struct, log
 
@@ -10,11 +11,12 @@ class Server:
     def __init__(self, dns_config_object):
         self.dns_config = dns_config_object.get_config()
         self.server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.dns_map = {}
+        self.dns_map = self.cache = {}
         self.upstream_object = {'https': {}, 'tls': {}}
         self.enable_log = self.dns_config['enable_log']
+        self.enable_cache = self.dns_config['enable_cache']
         self.server.bind((self.dns_config['listen_address'], self.dns_config['listen_port']))
-
+        print('DNS server listening on:', self.dns_config['listen_address'] + ':' + str(self.dns_config['listen_port']))
         bootstrap_dns_address = self.dns_config['bootstrap_dns_address']['address']
         bootstrap_dns_port = self.dns_config['bootstrap_dns_address']['port']
         upstream_timeout = self.dns_config['upstream_timeout']
@@ -62,11 +64,22 @@ class Server:
             if recv_header['flags']['QR'] == '0':
                 if recv_address[0] not in self.dns_config['client_blacklist']:
                     self.dns_map[transaction_id] = recv_address
-                    query_thread = threading.Thread(target=self.handle_query, args=(recv_data,))
+                    query_thread = threading.Thread(target=self.handle_query, args=(transaction_id, recv_data,))
                     query_thread.daemon = True
                     query_thread.start()
 
             if recv_header['flags']['QR'] == '1':
+                if self.enable_cache:
+                    response = self.handle_response(recv_data)
+                    if response[2]:
+                        response_name = utils.get_domain_name_string(response[2][0]['domain_name'])
+                        if response_name != '':
+                            response_type = response[2][0]['type']
+                            response_ttl = response[2][0]['ttl']
+                            if response_name not in self.cache:
+                                self.cache[response_name] = {}
+                            self.cache[response_name][response_type] = [recv_data, int(time.time()), response_ttl]
+
                 if transaction_id in self.dns_map:
                     sendback_address = self.dns_map[transaction_id]
                     self.server.sendto(recv_data, sendback_address)
@@ -74,33 +87,52 @@ class Server:
                 else:
                     pass
 
-                # self.handle_response(recv_data)
-
     def _send(self, response_data, address):
         self.server.sendto(response_data, address)
 
-    def handle_query(self, query_data):
+    def handle_query(self, transaction_id, query_data):
         try:
             query_parser = parse.ParseQuery(query_data)
             parse_result = query_parser.parse_plain()
             query_name_list = parse_result[1]['QNAME']
-
-            if len(query_name_list) != 0 and query_name_list[-1] == '\x00':
-                query_name_list.pop(-1)
-                query_name = '.'.join(query_name_list)
-            else:
-                query_name = ''
+            query_type = parse_result[1]['QTYPE']
+            query_name = utils.get_domain_name_string(query_name_list)
 
             if self.enable_log:
                 self.logger.write_log('query_parse_result:' + str(parse_result))
 
-            if query_name in self.dns_config['dns_bypass']:
-                upstream_object = self.bootstrap_dns_object
-            else:
-                upstream_object = self.select_upstream()
+            cache_query = None
+            cached = False
 
-            upstream_object.query(query_data)
+            if self.enable_cache and query_name in self.cache and query_type in self.cache[query_name]:
+                cache_query = self.cache[query_name][query_type]
+                cache_time = cache_query[1]
+                cache_ttl = cache_query[2]
+                current_time = int(time.time())
+
+                if current_time - cache_time > cache_ttl:
+                    self.cache[query_name].pop(query_type)
+                else:
+                    cached = True
+
+            if cached:
+                cache_query_result = cache_query[0]
+
+                cache_query_result = bytes.fromhex(transaction_id) + cache_query_result[2:]
+                sendback_address = self.dns_map[transaction_id]
+                self.server.sendto(cache_query_result, sendback_address)
+                self.dns_map.pop(transaction_id)
+            else:
+                if query_name in self.dns_config['dns_bypass']:
+                    upstream_object = self.bootstrap_dns_object
+                else:
+                    upstream_object = self.select_upstream()
+
+                upstream_object.query(query_data)
+
         except IndexError as exc:
+            print('[Error]', str(exc))
+        except BaseException as exc:
             print('[Error]', str(exc))
 
     def select_upstream(self):
@@ -140,16 +172,26 @@ class Server:
         return parse_result
 
     def get_ip_address(self, address, bootstrap_dns_object):
-        query_structer = struct.StructQuery(address)
-        query_data, transaction_id = query_structer.struct()
-        self.dns_map[transaction_id] = address
+        try:
+            query_structer = struct.StructQuery(address)
+            query_data, transaction_id = query_structer.struct()
+            self.dns_map[transaction_id] = address
 
-        bootstrap_dns_object.query(query_data)
-        while True:
-            recv_data, recv_address = self.server.recvfrom(512)
-            recv_header = parse.ParseHeader.parse_header(recv_data)
-            if recv_header['flags']['QR'] == '1' and recv_header['transaction_id'] in self.dns_map \
-                    and self.dns_map[recv_header['transaction_id']] == address:
-                response = self.handle_response(recv_data)
-                address = response[2][0]['record']
-                return address
+            bootstrap_dns_object.query(query_data)
+            while True:
+                recv_data, recv_address = self.server.recvfrom(512)
+                recv_header = parse.ParseHeader.parse_header(recv_data)
+                if recv_header['flags']['QR'] == '1' and recv_header['transaction_id'] in self.dns_map \
+                        and self.dns_map[recv_header['transaction_id']] == address:
+                    response = self.handle_response(recv_data)
+                    address = response[2][0]['record']
+                    return address
+
+        except BaseException as exc:
+            print('[Error]', str(exc))
+            if address == 'dns.google' or address == 'dns.google.com':
+                return '8.8.4.4'
+            elif address == '1.1.1.1' or address == '1.0.0.1' or 'cloudflare-dns.com' in address:
+                return '1.0.0.1'
+            elif address == 'dns.quad9.net':
+                return '9.9.9.9'
