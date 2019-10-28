@@ -1,7 +1,8 @@
 import random
 import socket
-from encrypted_dns import parse, upstream, utils, struct, log
 import threading
+
+from encrypted_dns import parse, upstream, utils, struct, log
 
 
 class Server:
@@ -13,6 +14,12 @@ class Server:
         self.upstream_object = {'https': {}, 'tls': {}}
         self.enable_log = self.dns_config['enable_log']
         self.server.bind((self.dns_config['listen_address'], self.dns_config['listen_port']))
+
+        bootstrap_dns_address = self.dns_config['bootstrap_dns_address']['address']
+        bootstrap_dns_port = self.dns_config['bootstrap_dns_address']['port']
+        upstream_timeout = self.dns_config['upstream_timeout']
+        self.bootstrap_dns_object = upstream.PlainUpstream(self.server, bootstrap_dns_address,
+                                                           upstream_timeout, bootstrap_dns_port)
         self.check_config()
 
         if self.enable_log:
@@ -20,17 +27,13 @@ class Server:
             self.logger.create_log()
 
     def check_config(self):
-        bootstrap_dns_address = self.dns_config['bootstrap_dns_address']['address']
-        bootstrap_dns_port = self.dns_config['bootstrap_dns_address']['port']
-
         for item in self.dns_config['upstream_dns']:
             protocol = item['protocol']
             address = item['address']
             if protocol == 'https' or protocol == 'tls':
                 if not utils.is_valid_ipv4_address(address):
                     if 'ip' not in item or item['ip'] == '':
-                        item['ip'] = self.get_ip_address(address, bootstrap_dns_address,
-                                                         bootstrap_dns_port, self.dns_config['upstream_timeout'])
+                        item['ip'] = self.get_ip_address(address, self.bootstrap_dns_object)
 
                 self.upstream_object[protocol][address] = self.shake_hand(item)
 
@@ -57,10 +60,11 @@ class Server:
                 self.logger.write_log('transaction_id:' + str(transaction_id))
 
             if recv_header['flags']['QR'] == '0':
-                self.dns_map[transaction_id] = recv_address
-                query_thread = threading.Thread(target=self.handle_query, args=(recv_data,))
-                query_thread.daemon = True
-                query_thread.start()
+                if recv_address[0] not in self.dns_config['client_blacklist']:
+                    self.dns_map[transaction_id] = recv_address
+                    query_thread = threading.Thread(target=self.handle_query, args=(recv_data,))
+                    query_thread.daemon = True
+                    query_thread.start()
 
             if recv_header['flags']['QR'] == '1':
                 if transaction_id in self.dns_map:
@@ -76,13 +80,28 @@ class Server:
         self.server.sendto(response_data, address)
 
     def handle_query(self, query_data):
-        # query_parser = parse.ParseQuery(query_data)
-        # parse_result = query_parser.parse_plain()
-        # if self.enable_log:
-        #   self.logger.write_log('query_parse_result:' + str(parse_result))
+        try:
+            query_parser = parse.ParseQuery(query_data)
+            parse_result = query_parser.parse_plain()
+            query_name_list = parse_result[1]['QNAME']
 
-        upstream_object = self.select_upstream()
-        upstream_object.query(query_data)
+            if len(query_name_list) != 0 and query_name_list[-1] == '\x00':
+                query_name_list.pop(-1)
+                query_name = '.'.join(query_name_list)
+            else:
+                query_name = ''
+
+            if self.enable_log:
+                self.logger.write_log('query_parse_result:' + str(parse_result))
+
+            if query_name in self.dns_config['dns_bypass']:
+                upstream_object = self.bootstrap_dns_object
+            else:
+                upstream_object = self.select_upstream()
+
+            upstream_object.query(query_data)
+        except IndexError as exc:
+            print('[Error]', str(exc))
 
     def select_upstream(self):
         upstream_dns_list = self.dns_config['upstream_dns']
@@ -120,13 +139,12 @@ class Server:
             self.logger.write_log('response_parse_result:' + str(parse_result))
         return parse_result
 
-    def get_ip_address(self, address, bootstrap_dns_address, bootstrap_dns_port, upstream_timeout):
+    def get_ip_address(self, address, bootstrap_dns_object):
         query_structer = struct.StructQuery(address)
         query_data, transaction_id = query_structer.struct()
         self.dns_map[transaction_id] = address
-        upstream_object = upstream.PlainUpstream(self.server, bootstrap_dns_address,
-                                                 upstream_timeout, bootstrap_dns_port)
-        upstream_object.query(query_data)
+
+        bootstrap_dns_object.query(query_data)
         while True:
             recv_data, recv_address = self.server.recvfrom(512)
             recv_header = parse.ParseHeader.parse_header(recv_data)

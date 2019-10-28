@@ -41,8 +41,8 @@ class TLSUpstream:
 
             query_header = wrap_sock.recv(2)
             query_length = int.from_bytes(query_header[1:2], "big")
-
-            query_result = wrap_sock.recv(query_length)
+            # query_result = wrap_sock.recv(query_length)
+            query_result = wrap_sock.recv(1024)
             self.client.sendto(query_result, ('127.0.0.1', self.port))
 
         except socket.timeout:
