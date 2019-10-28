@@ -115,5 +115,5 @@ dmypy.json
 .idea/
 
 # Encrypted-DNS
-
+config.json
 log/*
