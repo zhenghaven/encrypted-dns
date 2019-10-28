@@ -117,7 +117,6 @@ class ParseResponse:
 
     def parse_plain(self):
         response_data = self.data
-
         header = ParseHeader.parse_header(response_data[:12])
         question, question_end_point = ParseQuestion.parse_question(response_data[12:])
         answer_count = header['answer_count']

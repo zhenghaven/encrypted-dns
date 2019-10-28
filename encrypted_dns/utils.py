@@ -26,7 +26,7 @@ def get_bytes_from_bits(bits):
     index = 7
     integer = 0
     for i in bits:
-        integer += i * (2**index)
+        integer += i * (2 ** index)
         index -= 1
 
     return integer.to_bytes(1, byteorder='big')
@@ -116,6 +116,15 @@ def get_record_type(record_type):
             return reverse_dict[record_type]
     else:
         return ''
+
+
+def get_domain_name_string(query_name_list):
+    if len(query_name_list) != 0 and query_name_list[-1] == '\x00':
+        query_name_list.pop(-1)
+        query_name = '.'.join(query_name_list)
+    else:
+        query_name = ''
+    return query_name
 
 
 def get_record_class(record_class):
