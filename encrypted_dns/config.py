@@ -30,36 +30,36 @@ class Config:
                 },
                 {
                     'protocol': 'plain',
-                    'address': '1.1.1.1',
+                    'address': '9.9.9.9',
                     'port': 53,
                     'weight': 0
                 }
             ],
 
             'bootstrap_dns_address': {
-                'address': '1.2.4.8',
+                'address': '1.0.0.1',
                 'port': 53
             },
 
-            # 'dns_bypass': [
-            #     "captive.apple.com",
-            #     "connectivitycheck.gstatic.com",
-            #     "detectportal.firefox.com",
-            #     "msftconnecttest.com",
-            #     "nmcheck.gnome.org",
-            #
-            #     "pool.ntp.org",
-            #     "time.apple.com",
-            #     "time.asia.apple.com",
-            #     "time.euro.apple.com",
-            #     "time.nist.gov",
-            #     "time.windows.com",
-            # ],
+            'dns_bypass': [
+                "captive.apple.com",
+                "connectivitycheck.gstatic.com",
+                "detectportal.firefox.com",
+                "msftconnecttest.com",
+                "nmcheck.gnome.org",
 
-            # 'client_blacklist': [
-            #     '192.168.1.1',
-            #     '172.0.0.0'
-            # ]
+                "pool.ntp.org",
+                "time.apple.com",
+                "time.asia.apple.com",
+                "time.euro.apple.com",
+                "time.nist.gov",
+                "time.windows.com"
+            ],
+
+            'client_blacklist': [
+                '1.0.0.1',
+                '172.100.100.100'
+            ]
         }
 
         self.config = {}
