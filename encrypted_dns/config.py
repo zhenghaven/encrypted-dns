@@ -55,6 +55,7 @@ class Config:
                 "time.nist.gov",
                 "time.windows.com"
             ],
+            'dns_bypass_china': False,
 
             'client_blacklist': [
                 '1.0.0.1',

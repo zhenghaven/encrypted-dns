@@ -1,4 +1,5 @@
 import socket
+import ipaddress
 
 
 def is_valid_ipv4_address(address):
@@ -116,6 +117,16 @@ def get_record_type(record_type):
             return reverse_dict[record_type]
     else:
         return ''
+
+
+def is_china_address(net_list, ip_address):
+    try:
+        for net in net_list:
+            if ipaddress.ip_address(ip_address) in ipaddress.ip_network(net):
+                return True
+        return False
+    except Exception as exc:
+        print(exc)
 
 
 def get_domain_name_string(query_name_list):
