@@ -8,7 +8,8 @@ class Config:
         self.DEFAULT_CONFIG = {
             'enable_log': False,
             'enable_cache': True,
-            'listen_address': "0.0.0.0",
+
+            'listen_address': "127.0.0.1",
             'listen_port': 53,
 
             'upstream_weight': True,
@@ -37,7 +38,7 @@ class Config:
             ],
 
             'bootstrap_dns_address': {
-                'address': '1.0.0.1',
+                'address': '192.168.1.1',
                 'port': 53
             },
 
