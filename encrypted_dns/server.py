@@ -15,8 +15,13 @@ class Server:
         self.upstream_object = {'https': {}, 'tls': {}}
         self.enable_log = self.dns_config['enable_log']
         self.enable_cache = self.dns_config['enable_cache']
+        self.dns_bypass_china = self.dns_config['dns_bypass_china']
+        if self.dns_bypass_china:
+            self.net_list = [line.rstrip('\n') for line in open('chnroute.txt')]
+
         self.server.bind((self.dns_config['listen_address'], self.dns_config['listen_port']))
         print('DNS server listening on:', self.dns_config['listen_address'] + ':' + str(self.dns_config['listen_port']))
+
         bootstrap_dns_address = self.dns_config['bootstrap_dns_address']['address']
         bootstrap_dns_port = self.dns_config['bootstrap_dns_address']['port']
         upstream_timeout = self.dns_config['upstream_timeout']
@@ -63,14 +68,38 @@ class Server:
 
             if recv_header['flags']['QR'] == '0':
                 if recv_address[0] not in self.dns_config['client_blacklist']:
-                    self.dns_map[transaction_id] = recv_address
+                    self.dns_map[transaction_id] = [recv_address, 0]
                     query_thread = threading.Thread(target=self.handle_query, args=(transaction_id, recv_data,))
                     query_thread.daemon = True
                     query_thread.start()
 
             if recv_header['flags']['QR'] == '1':
+                response = self.handle_response(recv_data)
+
+                if transaction_id in self.dns_map:
+                    sendback_address = self.dns_map[transaction_id][0]
+                    if self.dns_bypass_china:
+                        if response[2]:
+                            if len(response[2]) > 1:
+                                ip_address = response[2][-1]['record']
+                            else:
+                                ip_address = response[2][0]['record']
+
+                            if utils.is_china_address(self.net_list, ip_address):
+                                self.server.sendto(recv_data, sendback_address)
+                                self.dns_map.pop(transaction_id)
+                            elif self.dns_map[transaction_id][1] == 0:
+                                self.dns_map[transaction_id][1] = 1
+                            elif self.dns_map[transaction_id][1] == 1:
+                                self.server.sendto(recv_data, sendback_address)
+                                self.dns_map.pop(transaction_id)
+                    else:
+                        self.server.sendto(recv_data, sendback_address)
+                        self.dns_map.pop(transaction_id)
+                else:
+                    pass
+
                 if self.enable_cache:
-                    response = self.handle_response(recv_data)
                     if response[2]:
                         response_name = utils.get_domain_name_string(response[2][0]['domain_name'])
                         if response_name != '':
@@ -79,13 +108,6 @@ class Server:
                             if response_name not in self.cache:
                                 self.cache[response_name] = {}
                             self.cache[response_name][response_type] = [recv_data, int(time.time()), response_ttl]
-
-                if transaction_id in self.dns_map:
-                    sendback_address = self.dns_map[transaction_id]
-                    self.server.sendto(recv_data, sendback_address)
-                    self.dns_map.pop(transaction_id)
-                else:
-                    pass
 
     def _send(self, response_data, address):
         self.server.sendto(response_data, address)
@@ -119,16 +141,21 @@ class Server:
                 cache_query_result = cache_query[0]
 
                 cache_query_result = bytes.fromhex(transaction_id) + cache_query_result[2:]
-                sendback_address = self.dns_map[transaction_id]
+                sendback_address = self.dns_map[transaction_id][0]
                 self.server.sendto(cache_query_result, sendback_address)
                 self.dns_map.pop(transaction_id)
             else:
                 if query_name in self.dns_config['dns_bypass']:
                     upstream_object = self.bootstrap_dns_object
+                    upstream_object.query(query_data)
+                elif self.dns_bypass_china:
+                    upstream_object = self.bootstrap_dns_object
+                    upstream_object.query(query_data)
+                    upstream_object = self.select_upstream()
+                    upstream_object.query(query_data)
                 else:
                     upstream_object = self.select_upstream()
-
-                upstream_object.query(query_data)
+                    upstream_object.query(query_data)
 
         except IndexError as exc:
             print('[Error]', str(exc))
