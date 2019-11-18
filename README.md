@@ -8,36 +8,31 @@ It could also cache DNS records to accelerate further queries, block specific cl
 
 ### Usage
 
-Install [Python 3.7](https://www.python.org/downloads/)
+* Install [Python 3.7](https://www.python.org/downloads/)
 
-Clone Github Repository
+* Clone Github Repository
 
 ```
 $ git clone git@github.com:Siujoeng-Lau/Workers-Proxy.git
 ```
 
-Run Encrypted-DNS Server
+* Run Encrypted-DNS Server
 
 ```
 $ cd Encrypted-DNS
 $ python3 main.py
 ```
 
-Test DNS Query
-
-Linux or MacOS
+* Test DNS Query
 
 ```
+Linux or MacOS:
 $ dig @127.0.0.1 www.google.com
-```
-
-Windows
-
-```
+Windows:
 $ nslookup www.google.com 127.0.0.1
 ```
 
-Change DNS Server IP to 127.0.0.1
+* Change DNS Server IP to 127.0.0.1
 
 ### Configure
 
@@ -103,6 +98,14 @@ Queries will be sent to the bootstrap DNS server.
     "time.nist.gov",
     "time.windows.com"
 ]
+```
+
+#### DNS Bypass China
+
+If you set `dns_bypass_china` to `True`, all the queries related to domain names in China will be redirected to the bootstrap address, which could be set to a public DNS server located in China.
+
+```
+'dns_bypass_china': True
 ```
 
 #### DNS Cache
