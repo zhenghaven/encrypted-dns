@@ -1,5 +1,6 @@
 import socket
 import ipaddress
+from encrypted_dns import parse, struct
 
 
 def is_valid_ipv4_address(address):
@@ -154,3 +155,27 @@ def get_record_class(record_class):
             return reverse_dict[record_class]
     else:
         return ''
+
+
+def get_ip_address(client_object, address, bootstrap_dns_object):
+    if address == 'dns.google' or address == 'dns.google.com':
+        return '8.8.4.4'
+    elif address == '1.1.1.1' or address == '1.0.0.1' or 'cloudflare-dns.com' in address:
+        return '1.0.0.1'
+    elif address == 'dns.quad9.net':
+        return '9.9.9.9'
+
+    query_struct = struct.StructQuery(address)
+    query_data, transaction_id = query_struct.struct()
+    client_object.dns_map[transaction_id] = address
+
+    bootstrap_dns_object.query(query_data)
+    while True:
+        recv_data, recv_address = client_object.server.recvfrom(512)
+        recv_header = parse.ParseHeader.parse_header(recv_data)
+        if recv_header['flags']['QR'] == '1' and recv_header['transaction_id'] in client_object.dns_map \
+                and client_object.dns_map[recv_header['transaction_id']] == address:
+            response = client_object.handle_response(recv_data)
+            address = response[2][0]['record']
+            return address
+
