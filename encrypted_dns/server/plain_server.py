@@ -3,16 +3,16 @@ import socket
 import threading
 import time
 
-from encrypted_dns import parse, upstream, utils, struct, log
+from encrypted_dns import upstream, parse, utils, log
 
 
-class Server:
+class PlainServer:
 
     def __init__(self, dns_config_object):
         self.dns_config = dns_config_object.get_config()
         self.server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.dns_map = self.cache = {}
-        self.upstream_object = {'https': {}, 'tls': {}}
+
         self.enable_log = self.dns_config['enable_log']
         self.enable_cache = self.dns_config['enable_cache']
         self.dns_bypass_china = self.dns_config['dns_bypass_china']
@@ -20,40 +20,16 @@ class Server:
             self.net_list = [line.rstrip('\n') for line in open('chnroute.txt')]
 
         self.server.bind((self.dns_config['listen_address'], self.dns_config['listen_port']))
-        print('DNS server listening on:', self.dns_config['listen_address'] + ':' + str(self.dns_config['listen_port']))
+        print('Plain DNS Server listening on:',
+              self.dns_config['listen_address'] + ':' + str(self.dns_config['listen_port']))
 
-        bootstrap_dns_address = self.dns_config['bootstrap_dns_address']['address']
-        bootstrap_dns_port = self.dns_config['bootstrap_dns_address']['port']
         upstream_timeout = self.dns_config['upstream_timeout']
-        self.bootstrap_dns_object = upstream.PlainUpstream(self.server, bootstrap_dns_address,
-                                                           upstream_timeout, bootstrap_dns_port)
-        self.check_config()
+        self.bootstrap_dns_object = upstream.PlainUpstream(self, self.dns_config['listen_port'],
+                                                           self.dns_config['bootstrap_dns_address'], upstream_timeout)
 
         if self.enable_log:
             self.logger = log.Logger()
             self.logger.create_log()
-
-    def check_config(self):
-        for item in self.dns_config['upstream_dns']:
-            protocol = item['protocol']
-            address = item['address']
-            if protocol == 'https' or protocol == 'tls':
-                if not utils.is_valid_ipv4_address(address):
-                    if 'ip' not in item or item['ip'] == '':
-                        item['ip'] = self.get_ip_address(address, self.bootstrap_dns_object)
-
-                self.upstream_object[protocol][address] = self.shake_hand(item)
-
-    def shake_hand(self, item):
-        if item['protocol'] == 'https':
-            https_upstream = upstream.HTTPSUpstream(self.server, self.dns_config['listen_port'],
-                                                    item, self.dns_config['upstream_timeout'])
-            return https_upstream
-
-        if item['protocol'] == 'tls':
-            tls_upstream = upstream.TLSUpstream(self.server, self.dns_config['listen_port'],
-                                                item, self.dns_config['upstream_timeout'])
-            return tls_upstream
 
     def start(self):
         while True:
@@ -97,7 +73,7 @@ class Server:
                         self.server.sendto(recv_data, sendback_address)
                         self.dns_map.pop(transaction_id)
                 else:
-                    pass
+                    continue
 
                 if self.enable_cache:
                     if response[2]:
@@ -176,19 +152,17 @@ class Server:
         else:
             upstream_dns = random.choice(upstream_dns_list)
 
-        server = self.server
         protocol = upstream_dns['protocol']
-        address = upstream_dns['address']
-        port = upstream_dns['port']
-        upstream_object = None
+        port = self.dns_config['listen_port']
 
         if protocol == 'plain':
-            upstream_object = upstream.PlainUpstream(server, address, upstream_timeout, port)
+            upstream_object = upstream.PlainUpstream(self, port, upstream_dns, upstream_timeout)
         elif protocol == 'https':
-            upstream_object = self.upstream_object['https'][address]
+            upstream_object = upstream.HTTPSUpstream(self, port, upstream_dns, upstream_timeout)
         elif protocol == 'tls':
-            upstream_object = self.upstream_object['tls'][address]
-
+            upstream_object = upstream.TLSUpstream(self, port, upstream_dns, upstream_timeout)
+        else:
+            return None
         return upstream_object
 
     def handle_response(self, response_data):
@@ -197,28 +171,3 @@ class Server:
         if self.enable_log:
             self.logger.write_log('response_parse_result:' + str(parse_result))
         return parse_result
-
-    def get_ip_address(self, address, bootstrap_dns_object):
-        try:
-            query_structer = struct.StructQuery(address)
-            query_data, transaction_id = query_structer.struct()
-            self.dns_map[transaction_id] = address
-
-            bootstrap_dns_object.query(query_data)
-            while True:
-                recv_data, recv_address = self.server.recvfrom(512)
-                recv_header = parse.ParseHeader.parse_header(recv_data)
-                if recv_header['flags']['QR'] == '1' and recv_header['transaction_id'] in self.dns_map \
-                        and self.dns_map[recv_header['transaction_id']] == address:
-                    response = self.handle_response(recv_data)
-                    address = response[2][0]['record']
-                    return address
-
-        except BaseException as exc:
-            print('[Error]', str(exc))
-            if address == 'dns.google' or address == 'dns.google.com':
-                return '8.8.4.4'
-            elif address == '1.1.1.1' or address == '1.0.0.1' or 'cloudflare-dns.com' in address:
-                return '1.0.0.1'
-            elif address == 'dns.quad9.net':
-                return '9.9.9.9'
