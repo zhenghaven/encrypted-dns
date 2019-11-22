@@ -9,8 +9,18 @@ class Config:
             'enable_log': False,
             'enable_cache': True,
 
-            'listen_address': "127.0.0.1",
-            'listen_port': 53,
+            'listen': [
+                {
+                    'protocol': 'plain',
+                    'address': '127.0.0.1',
+                    'port': 53
+                },
+                {
+                    'protocol': 'plain',
+                    'address': '127.0.0.1',
+                    'port': 5353
+                },
+            ],
 
             'upstream_weight': True,
             'upstream_timeout': 30,
