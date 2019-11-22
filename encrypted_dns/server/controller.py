@@ -10,8 +10,8 @@ class Controller:
 
     def __init__(self, dns_config_object):
         self.server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.server.bind(('localhost', 12345))
-        (self.controller_address, self.controller_port) = self.server.getsockname()
+        self.server.bind(('', 0))
+        (self.controller_address, self.controller_port) = ('localhost', self.server.getsockname()[1])
         self.dns_config = dns_config_object.get_config()
         self.dns_map = {}
         self.listen_thread_list = []
