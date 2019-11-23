@@ -40,7 +40,8 @@ class Controller:
             listen['client_blacklist'] = self.dns_config['client_blacklist']
             if listen['protocol'] == 'plain':
                 listen_object = server.PlainServer(listen, (self.controller_address, self.controller_port))
-                self.listen_thread_list.append(threading.Thread(target=listen_object.start, args=(), daemon=True).start())
+                self.listen_thread_list.append(
+                    threading.Thread(target=listen_object.start, args=(), daemon=True).start())
 
     def start(self):
         while True:
@@ -59,11 +60,11 @@ class Controller:
                 query_thread.daemon = True
                 query_thread.start()
 
-            if recv_header['flags']['QR'] == '1':
-                response = self.handle_response(recv_data)
-
+            elif recv_header['flags']['QR'] == '1':
                 if transaction_id in self.dns_map:
+                    response = self.handle_response(recv_data)
                     sendback_address = self.dns_map[transaction_id][0]
+
                     if self.dns_bypass_china:
                         if response[2]:
                             if len(response[2]) > 1:
@@ -71,14 +72,12 @@ class Controller:
                             else:
                                 ip_address = response[2][0]['record']
 
-                            if utils.is_china_address(self.net_list, ip_address):
+                            if self.dns_map[transaction_id][1] == 1 or utils.is_china_address(self.net_list,
+                                                                                              ip_address):
                                 self.server.sendto(recv_data, sendback_address)
                                 self.dns_map.pop(transaction_id)
                             elif self.dns_map[transaction_id][1] == 0:
                                 self.dns_map[transaction_id][1] = 1
-                            elif self.dns_map[transaction_id][1] == 1:
-                                self.server.sendto(recv_data, sendback_address)
-                                self.dns_map.pop(transaction_id)
                     else:
                         self.server.sendto(recv_data, sendback_address)
                         self.dns_map.pop(transaction_id)

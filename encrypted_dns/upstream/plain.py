@@ -12,7 +12,7 @@ class PlainUpstream(Upstream):
 
     def query(self, query_data):
         self.client_object.server.settimeout(self.timeout)
-        self.client_object.server.sendto(query_data, (self.config["ip"], self.config["port"]))
+        self.client_object.server.sendto(query_data, (self.config["address"], self.config["port"]))
         self.client_object.server.settimeout(socket.getdefaulttimeout())
 
     def receive(self):
