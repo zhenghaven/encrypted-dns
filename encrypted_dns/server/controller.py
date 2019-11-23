@@ -44,55 +44,63 @@ class Controller:
                     threading.Thread(target=listen_object.start, args=(), daemon=True).start())
 
     def start(self):
-        while True:
-            recv_data, recv_address = self.server.recvfrom(512)
-            recv_header = parse.ParseHeader.parse_header(recv_data)
-            if self.enable_log:
-                self.logger.write_log('recv_data:' + str(recv_data))
+        try:
+            while True:
+                recv_data, recv_address = self.server.recvfrom(512)
+                recv_header = parse.ParseHeader.parse_header(recv_data)
+                if self.enable_log:
+                    self.logger.write_log('recv_data:' + str(recv_data))
 
-            transaction_id = recv_header['transaction_id']
-            if self.enable_log:
-                self.logger.write_log('transaction_id:' + str(transaction_id))
+                transaction_id = recv_header['transaction_id']
+                if self.enable_log:
+                    self.logger.write_log('transaction_id:' + str(transaction_id))
 
-            if recv_header['flags']['QR'] == '0':
-                self.dns_map[transaction_id] = [recv_address, 0]
-                query_thread = threading.Thread(target=self.handle_query, args=(transaction_id, recv_data,))
-                query_thread.daemon = True
-                query_thread.start()
+                if recv_header['flags']['QR'] == '0':
+                    self.dns_map[transaction_id] = [recv_address, 0]
+                    query_thread = threading.Thread(target=self.handle_query, args=(transaction_id, recv_data,))
+                    query_thread.daemon = True
+                    query_thread.start()
 
-            elif recv_header['flags']['QR'] == '1':
-                if transaction_id in self.dns_map:
-                    response = self.handle_response(recv_data)
-                    sendback_address = self.dns_map[transaction_id][0]
+                elif recv_header['flags']['QR'] == '1':
+                    if transaction_id in self.dns_map:
+                        response = self.handle_response(recv_data)
+                        sendback_address = self.dns_map[transaction_id][0]
 
-                    if self.dns_bypass_china:
-                        if response[2]:
-                            if len(response[2]) > 1:
-                                ip_address = response[2][-1]['record']
-                            else:
-                                ip_address = response[2][0]['record']
+                        if self.dns_bypass_china:
+                            if response[2]:
+                                if len(response[2]) > 1:
+                                    ip_address = response[2][-1]['record']
+                                else:
+                                    ip_address = response[2][0]['record']
 
-                            if self.dns_map[transaction_id][1] == 1 or utils.is_china_address(self.net_list,
-                                                                                              ip_address):
-                                self.server.sendto(recv_data, sendback_address)
-                                self.dns_map.pop(transaction_id)
-                            elif self.dns_map[transaction_id][1] == 0:
-                                self.dns_map[transaction_id][1] = 1
+                                if self.dns_map[transaction_id][1] == 1 or utils.is_china_address(self.net_list,
+                                                                                                  ip_address):
+                                    self.server.sendto(recv_data, sendback_address)
+                                    self.dns_map.pop(transaction_id)
+                                elif self.dns_map[transaction_id][1] == 0:
+                                    self.dns_map[transaction_id][1] = 1
+                        else:
+                            self.server.sendto(recv_data, sendback_address)
+                            self.dns_map.pop(transaction_id)
                     else:
-                        self.server.sendto(recv_data, sendback_address)
-                        self.dns_map.pop(transaction_id)
-                else:
-                    continue
+                        continue
 
-                if self.enable_cache:
-                    if response[2]:
-                        response_name = utils.get_domain_name_string(response[2][0]['domain_name'])
-                        if response_name != '':
-                            response_type = response[2][0]['type']
-                            response_ttl = response[2][0]['ttl']
-                            if response_name not in self.cache:
-                                self.cache[response_name] = {}
-                            self.cache[response_name][response_type] = [recv_data, int(time.time()), response_ttl]
+                    if self.enable_cache:
+                        if response[2]:
+                            response_name = utils.get_domain_name_string(response[2][0]['domain_name'])
+                            if response_name != '':
+                                response_type = response[2][0]['type']
+                                response_ttl = response[2][0]['ttl']
+                                if response_name not in self.cache:
+                                    self.cache[response_name] = {}
+                                self.cache[response_name][response_type] = [recv_data, int(time.time()), response_ttl]
+        except socket.timeout as exc:
+            print('[Error]', str(exc))
+            self.start()
+
+        except BaseException as exc:
+            print('[Error]', str(exc))
+            self.start()
 
     def _send(self, response_data, address):
         self.server.sendto(response_data, address)
