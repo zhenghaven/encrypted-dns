@@ -13,7 +13,7 @@ It could also cache DNS records to accelerate further queries, block specific cl
 * Clone Github Repository
 
 ```
-$ git clone git@github.com:Siujoeng-Lau/Workers-Proxy.git
+$ git clone git@github.com:Siujoeng-Lau/Encrypted-DNS.git
 ```
 
 * Run Encrypted-DNS Server
