@@ -48,7 +48,7 @@ class Config:
             ],
 
             'bootstrap_dns_address': {
-                'ip': '192.168.1.1',
+                'ip': '1.2.4.8',
                 'port': 53
             },
 
