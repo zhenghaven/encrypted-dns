@@ -1,13 +1,27 @@
 import http.server
 import ssl
+import base64
 
 from encrypted_dns import parse
 from encrypted_dns.server import BaseServer
 
 
 class DNSOverHttpsHandler(http.server.SimpleHTTPRequestHandler):
+    def do_HEAD(self):
+        self.send_response(400)
+        self.end_headers()
+
     def do_GET(self):
-        return http.server.SimpleHTTPRequestHandler.do_GET(self)
+        if "/dns-query?dns=" in self.path:
+            dns_message = self.path.replace("/dns-query?dns=", "")
+        else:
+            self.send_response(400)
+            self.end_headers()
+            return
+
+        dns_message_decoded = base64.urlsafe_b64decode(dns_message)
+
+        # return http.server.SimpleHTTPRequestHandler.do_GET(self)
 
 
 class HTTPSServer(BaseServer):

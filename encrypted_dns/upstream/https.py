@@ -17,9 +17,9 @@ class HTTPSUpstream(Upstream):
 
     def query(self, query_data):
         base64_query_string = self.struct_query(query_data)
-        base64_query_string = base64_query_string.replace('=', '')
-        base64_query_string = base64_query_string.replace('+', '-')
-        base64_query_string = base64_query_string.replace('/', '_')
+        # base64_query_string = base64_query_string.replace('=', '')
+        # base64_query_string = base64_query_string.replace('+', '-')
+        # base64_query_string = base64_query_string.replace('/', '_')
 
         query_parameters = '?dns=' + base64_query_string + '&ct=application/dns-message'
         self.query_url = '/dns-query' + query_parameters
@@ -38,6 +38,6 @@ class HTTPSUpstream(Upstream):
 
     @staticmethod
     def struct_query(query_data):
-        base64_query_data = base64.b64encode(query_data)
+        base64_query_data = base64.urlsafe_b64encode(query_data)
         base64_query_string = base64_query_data.decode("utf-8")
         return base64_query_string
