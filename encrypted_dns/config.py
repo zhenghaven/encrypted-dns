@@ -12,12 +12,12 @@ class Config:
             'listen': [
                 {
                     'protocol': 'plain',
-                    'address': '127.0.0.1',
+                    'address': '0.0.0.0',
                     'port': 53
                 },
                 {
                     'protocol': 'plain',
-                    'address': '127.0.0.1',
+                    'address': '0.0.0.0',
                     'port': 5353
                 },
             ],
@@ -30,14 +30,17 @@ class Config:
                     'address': 'cloudflare-dns.com',
                     'ip': '1.0.0.1',
                     'port': 443,
-                    'weight': 0
+                    'weight': 100,
+                    'enable_http_proxy': False,
+                    'proxy_host': 'localhost',
+                    'proxy_port': 8001
                 },
                 {
                     'protocol': 'tls',
                     'address': 'dns.google',
                     'ip': '8.8.4.4',
                     'port': 853,
-                    'weight': 100
+                    'weight': 0
                 },
                 {
                     'protocol': 'plain',

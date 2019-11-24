@@ -17,10 +17,6 @@ class HTTPSUpstream(Upstream):
 
     def query(self, query_data):
         base64_query_string = self.struct_query(query_data)
-        # base64_query_string = base64_query_string.replace('=', '')
-        # base64_query_string = base64_query_string.replace('+', '-')
-        # base64_query_string = base64_query_string.replace('/', '_')
-
         query_parameters = '?dns=' + base64_query_string + '&ct=application/dns-message'
         self.query_url = '/dns-query' + query_parameters
         self.query_headers = {'host': self.config["address"]}
@@ -28,7 +24,14 @@ class HTTPSUpstream(Upstream):
 
     def receive(self):
         try:
-            https_connection = http.client.HTTPSConnection(self.config['ip'], self.config['port'], timeout=self.timeout)
+            if self.config['enable_http_proxy']:
+                https_connection = http.client.HTTPSConnection(self.config['proxy_host'],
+                                                               self.config['proxy_port'], timeout=self.timeout)
+                https_connection.set_tunnel(self.config['ip'], self.config['port'])
+            else:
+                https_connection = http.client.HTTPSConnection(self.config['ip'],
+                                                               self.config['port'], timeout=self.timeout)
+
             https_connection.request('GET', self.query_url, headers=self.query_headers)
             response_object = https_connection.getresponse()
             query_result = response_object.read()
