@@ -18,7 +18,7 @@ class Config:
                 {
                     'protocol': 'plain',
                     'address': '0.0.0.0',
-                    'port': 5353
+                    'port': 5301
                 },
             ],
 

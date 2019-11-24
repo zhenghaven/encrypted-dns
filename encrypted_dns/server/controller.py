@@ -98,7 +98,10 @@ class Controller:
             print('[Error]', str(exc))
             self.start()
 
-        except BaseException as exc:
+        except KeyboardInterrupt:
+            exit()
+
+        except Exception as exc:
             print('[Error]', str(exc))
             self.start()
 
@@ -152,7 +155,9 @@ class Controller:
 
         except IndexError as exc:
             print('[Error]', str(exc))
-        except BaseException as exc:
+        except KeyboardInterrupt:
+            exit()
+        except Exception as exc:
             print('[Error]', str(exc))
 
     def select_upstream(self):
