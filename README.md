@@ -6,33 +6,36 @@
 Encrypted-DNS operates as a DNS server that forward DNS queries over TLS or HTTPS, thus preventing your device from DNS cache poisoning and censorship.
 It could also cache DNS records to accelerate further queries, block specific client, and ignore particular domain names.
 
+Languages: [English](https://github.com/Siujoeng-Lau/Encrypted-DNS/blob/master/README.md), [简体中文](https://github.com/Siujoeng-Lau/Encrypted-DNS/blob/master/README_zh.md).
+
 ### Usage
 
-* Install [Python 3.7](https://www.python.org/downloads/)
+* Install [Python 3.7](https://www.python.org/downloads/).
 
-* Clone Github Repository
+* Clone Github Repository.
 
 ```
 $ git clone git@github.com:Siujoeng-Lau/Encrypted-DNS.git
 ```
 
-* Run Encrypted-DNS Server
+* Run Encrypted-DNS Server.
 
 ```
 $ cd Encrypted-DNS
-$ python3 main.py
+$ sudo python3 main.py
 ```
 
-* Test DNS Query
+* Test DNS Query.
 
 ```
 Linux or MacOS:
 $ dig @127.0.0.1 www.google.com
+
 Windows:
 $ nslookup www.google.com 127.0.0.1
 ```
 
-* Change DNS Server IP to 127.0.0.1
+* Change DNS Address to `127.0.0.1`.
 
 ### Configure
 
@@ -40,7 +43,7 @@ Encrypted-DNS will generate a JSON file within its directory.
 
 #### Upstream DNS
 
-The following JSON dictionary is a typical Upstream DNS server.
+The following JSON object is a typical Upstream DNS server.
 
 Encrypted-DNS supports three protocols: `plain`, `tls`, and `https`. 
 
@@ -55,7 +58,8 @@ You may specify the ip address of DNS-over-HTTPS or DNS-over-TLS server to avoid
     'weight': 100
 }
 ```
-If you add multiple address, DNS queries will be forwarded to a server based on random selection or weighted random selection.
+
+If you add multiple upstream servers, each DNS query will be forwarded to a server based on random selection or weighted random selection.
 
 #### Bootstrap DNS Address
 
