@@ -3,7 +3,7 @@
 [![Pull requests](https://img.shields.io/github/issues-pr-closed/Siujoeng-Lau/Encrypted-DNS?style=for-the-badge)](https://github.com/Siujoeng-Lau/Encrypted-DNS/pulls)
 [![GitHub stars](https://img.shields.io/github/stars/Siujoeng-Lau/Encrypted-DNS?style=for-the-badge)](https://github.com/Siujoeng-Lau/Encrypted-DNS/stargazers)
 
-Encrypted-DNS operates as a DNS server that forward DNS queries over TLS or HTTPS, thus preventing your device from DNS cache poisoning and censorship.
+Encrypted-DNS operates as a DNS server that forward DNS queries over UDP, TCP, TLS or HTTPS, thus preventing your device from DNS cache poisoning and censorship.
 It could also cache DNS records to accelerate further queries, block specific client, and ignore particular domain names.
 
 Languages: [English](https://github.com/Siujoeng-Lau/Encrypted-DNS/blob/master/README.md), [简体中文](https://github.com/Siujoeng-Lau/Encrypted-DNS/blob/master/README_zh.md).
@@ -45,17 +45,41 @@ Encrypted-DNS will generate a JSON file within its directory.
 
 The following JSON object is a typical Upstream DNS server.
 
-Encrypted-DNS supports three protocols: `plain`, `tls`, and `https`. 
+Encrypted-DNS supports three protocols: `udp`, `tcp`, `tls`, and `https`. 
 
 You may specify the ip address of DNS-over-HTTPS or DNS-over-TLS server to avoid DNS cache poisoning.
 
 ```
-{
-    'protocol': 'tls',
-    'address': 'dns.google',
-    'ip': '8.8.4.4',
-    'port': 853,
-    'weight': 100
+'upstream_dns': [
+    {
+        'protocol': 'https',
+        'address': 'cloudflare-dns.com',
+        'ip': '1.0.0.1',
+        'port': 443,
+        'weight': 0,
+        'enable_http_proxy': False,
+        'proxy_host': 'localhost',
+        'proxy_port': 8001
+    },
+    {
+        'protocol': 'tls',
+        'address': 'dns.google',
+        'ip': '8.8.4.4',
+        'port': 853,
+        'weight': 100
+    },
+    {
+        'protocol': 'udp',
+        'address': '9.9.9.9',
+        'port': 53,
+        'weight': 0
+    },
+    {
+        'protocol': 'tcp',
+        'address': '8.8.4.4',
+        'port': 53,
+        'weight': 0
+    }
 }
 ```
 
@@ -63,7 +87,7 @@ If you add multiple upstream servers, each DNS query will be forwarded to a serv
 
 #### Bootstrap DNS Address
 
-Encrypted-DNS will send a plain DNS query to the bootstrap DNS server to retrieve the ip address of DNS-over-HTTPS or DNS-over-TLS server unless you specify it.
+Encrypted-DNS will send a UDP DNS query to the bootstrap DNS server to retrieve the ip address of DNS-over-HTTPS or DNS-over-TLS server unless you specify it.
 ```
 'bootstrap_dns_address': {
     'address': '1.0.0.1',

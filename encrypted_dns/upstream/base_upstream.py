@@ -14,7 +14,8 @@ class Upstream(ABC):
     def shake_hand(self):
         address = self.config['address']
         if ('ip' not in self.config or self.config['ip'] == '') and not utils.is_valid_ipv4_address(address):
-            self.config['ip'] = utils.get_ip_address(self.client_object, address, self.client_object.bootstrap_dns_object)
+            self.config['ip'] = utils.get_ip_address(self.client_object, address,
+                                                     self.client_object.bootstrap_dns_object)
 
     @abstractmethod
     def query(self, query_data):
