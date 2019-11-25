@@ -122,7 +122,7 @@ def get_record_type(record_type):
 
 def is_subnet_address(net_list, ip_address):
     try:
-        if not net_list:
+        if not net_list or isinstance(ip_address, bytes):
             return False
         for net in net_list:
             if ipaddress.ip_address(ip_address) in ipaddress.ip_network(net):
