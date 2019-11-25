@@ -4,7 +4,8 @@
 [![GitHub stars](https://img.shields.io/github/stars/Siujoeng-Lau/Encrypted-DNS?style=for-the-badge)](https://github.com/Siujoeng-Lau/Encrypted-DNS/stargazers)
 
 Encrypted-DNS 是一个用于转发 DNS 请求的 DNS 服务器. 它支持 UDP, DNS-over-HTTPS, 以及 DNS-over-TLS 协议. 
-它将会避免 DNS 污染和劫持, 缓存 DNS 请求, 屏蔽指定客户端, 以及对 DNS 进行分流.
+
+它将会避免 DNS 污染和劫持, 缓存 DNS 请求, 屏蔽指定客户端, 以及对 DNS 请求进行分流.
    
 语言: [English](https://github.com/Siujoeng-Lau/Encrypted-DNS/blob/master/README.md), [简体中文](https://github.com/Siujoeng-Lau/Encrypted-DNS/blob/master/README_zh.md).
 
