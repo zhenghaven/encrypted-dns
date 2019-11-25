@@ -73,8 +73,8 @@ class Controller:
                                 else:
                                     ip_address = response[2][0]['record']
 
-                                if self.dns_map[transaction_id][1] == 1 or utils.is_china_address(self.net_list,
-                                                                                                  ip_address):
+                                if self.dns_map[transaction_id][1] == 1 or utils.is_subnet_address(self.net_list,
+                                                                                                   ip_address):
                                     self.server.sendto(recv_data, sendback_address)
                                     self.dns_map.pop(transaction_id)
                                 elif self.dns_map[transaction_id][1] == 0:

@@ -1,6 +1,6 @@
 import socket
 
-from encrypted_dns import parse
+from encrypted_dns import parse, utils
 from encrypted_dns.server import BaseServer
 
 
@@ -19,7 +19,8 @@ class PlainServer(BaseServer):
             recv_header = parse.ParseHeader.parse_header(recv_data)
             transaction_id = recv_header['transaction_id']
 
-            if recv_header['flags']['QR'] == '0' and recv_address[0] not in self.server_config['client_blacklist']:
+            if recv_header['flags']['QR'] == '0' and not utils.is_subnet_address(self.server_config['client_blacklist'],
+                                                                                 recv_address[0]):
                 self.dns_map[transaction_id] = recv_address
                 self.query(recv_data)
 
