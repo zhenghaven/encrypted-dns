@@ -3,7 +3,7 @@
 [![Pull requests](https://img.shields.io/github/issues-pr-closed/Siujoeng-Lau/Encrypted-DNS?style=for-the-badge)](https://github.com/Siujoeng-Lau/Encrypted-DNS/pulls)
 [![GitHub stars](https://img.shields.io/github/stars/Siujoeng-Lau/Encrypted-DNS?style=for-the-badge)](https://github.com/Siujoeng-Lau/Encrypted-DNS/stargazers)
 
-Encrypted-DNS 是一个用于转发 DNS 请求的 DNS 服务器. 它支持 UDP, DNS-over-HTTPS, 以及 DNS-over-TLS 协议. 
+Encrypted-DNS 是一个用于转发 DNS 请求的 DNS 服务器. 它支持 UDP, TCP, DNS-over-HTTPS, 以及 DNS-over-TLS 协议. 
 
 它将会避免 DNS 污染和劫持, 缓存 DNS 请求, 屏蔽指定客户端, 以及对 DNS 请求进行分流.
    
@@ -46,17 +46,41 @@ Encrypted-DNS 将会在程序目录中生成 JSON 格式的配置文件.
 
 下面的 JSON 对象是一个典型的上游 DNS 配置.
 
-Encrypted-DNS 支持以下协议: `plain`, `tls`, 和 `https`. 
+Encrypted-DNS 支持以下协议: `udp`, `tcp`, `tls`, 和 `https`. 
 
 你可以指定使用 DNS-over-HTTPS 和 DNS-over-TLS 协议的服务器的 IP 地址, 来避免 DNS 缓存污染.
 
 ```
-{
-    'protocol': 'tls',
-    'address': 'dns.google',
-    'ip': '8.8.4.4',
-    'port': 853,
-    'weight': 100
+'upstream_dns': [
+    {
+        'protocol': 'https',
+        'address': 'cloudflare-dns.com',
+        'ip': '1.0.0.1',
+        'port': 443,
+        'weight': 0,
+        'enable_http_proxy': False,
+        'proxy_host': 'localhost',
+        'proxy_port': 8001
+    },
+    {
+        'protocol': 'tls',
+        'address': 'dns.google',
+        'ip': '8.8.4.4',
+        'port': 853,
+        'weight': 100
+    },
+    {
+        'protocol': 'udp',
+        'address': '9.9.9.9',
+        'port': 53,
+        'weight': 0
+    },
+    {
+        'protocol': 'tcp',
+        'address': '8.8.4.4',
+        'port': 53,
+        'weight': 0
+    }
 }
 ```
 

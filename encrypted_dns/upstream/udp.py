@@ -3,7 +3,7 @@ import socket
 from encrypted_dns.upstream import Upstream
 
 
-class PlainUpstream(Upstream):
+class UDPUpstream(Upstream):
     def __init__(self, client_object, client_port, config, timeout):
         super().__init__(client_object, client_port, config, timeout)
 

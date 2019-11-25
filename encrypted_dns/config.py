@@ -11,12 +11,12 @@ class Config:
 
             'listen': [
                 {
-                    'protocol': 'plain',
+                    'protocol': 'udp',
                     'address': '127.0.0.1',
                     'port': 53
                 },
                 {
-                    'protocol': 'plain',
+                    'protocol': 'udp',
                     'address': '127.0.0.1',
                     'port': 5301
                 }
@@ -43,8 +43,14 @@ class Config:
                     'weight': 100
                 },
                 {
-                    'protocol': 'plain',
+                    'protocol': 'udp',
                     'address': '9.9.9.9',
+                    'port': 53,
+                    'weight': 0
+                },
+                {
+                    'protocol': 'tcp',
+                    'address': '8.8.4.4',
                     'port': 53,
                     'weight': 0
                 }

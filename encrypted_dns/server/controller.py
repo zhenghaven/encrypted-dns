@@ -24,8 +24,8 @@ class Controller:
             self.net_list = [line.rstrip('\n') for line in open('chnroute.txt')]
 
         upstream_timeout = self.dns_config['upstream_timeout']
-        self.bootstrap_dns_object = upstream.PlainUpstream(self, self.controller_port,
-                                                           self.dns_config['bootstrap_dns_address'], upstream_timeout)
+        self.bootstrap_dns_object = upstream.UDPUpstream(self, self.controller_port,
+                                                         self.dns_config['bootstrap_dns_address'], upstream_timeout)
 
         self.enable_log = self.dns_config['enable_log']
         if self.enable_log:
@@ -38,8 +38,8 @@ class Controller:
         listen_config = self.dns_config['listen']
         for listen in listen_config:
             listen['client_blacklist'] = self.dns_config['client_blacklist']
-            if listen['protocol'] == 'plain':
-                listen_object = server.PlainServer(listen, (self.controller_address, self.controller_port))
+            if listen['protocol'] == 'udp':
+                listen_object = server.UDPServer(listen, (self.controller_address, self.controller_port))
                 self.listen_thread_list.append(
                     threading.Thread(target=listen_object.start, args=(), daemon=True).start())
 
@@ -177,8 +177,10 @@ class Controller:
         protocol = upstream_dns['protocol']
         port = self.controller_port
 
-        if protocol == 'plain':
-            upstream_object = upstream.PlainUpstream(self, port, upstream_dns, upstream_timeout)
+        if protocol == 'udp':
+            upstream_object = upstream.UDPUpstream(self, port, upstream_dns, upstream_timeout)
+        elif protocol == 'tcp':
+            upstream_object = upstream.TCPUpstream(self, port, upstream_dns, upstream_timeout)
         elif protocol == 'https':
             upstream_object = upstream.HTTPSUpstream(self, port, upstream_dns, upstream_timeout)
         elif protocol == 'tls':

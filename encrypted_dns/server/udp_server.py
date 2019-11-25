@@ -4,7 +4,7 @@ from encrypted_dns import parse, utils
 from encrypted_dns.server import BaseServer
 
 
-class PlainServer(BaseServer):
+class UDPServer(BaseServer):
     def __init__(self, server_config, controller_address):
         super().__init__(server_config, controller_address)
 
