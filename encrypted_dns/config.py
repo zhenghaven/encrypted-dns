@@ -12,14 +12,14 @@ class Config:
             'listen': [
                 {
                     'protocol': 'plain',
-                    'address': '0.0.0.0',
+                    'address': '127.0.0.1',
                     'port': 53
                 },
                 {
                     'protocol': 'plain',
-                    'address': '0.0.0.0',
+                    'address': '127.0.0.1',
                     'port': 5301
-                },
+                }
             ],
 
             'upstream_weight': True,
@@ -30,7 +30,7 @@ class Config:
                     'address': 'cloudflare-dns.com',
                     'ip': '1.0.0.1',
                     'port': 443,
-                    'weight': 100,
+                    'weight': 0,
                     'enable_http_proxy': False,
                     'proxy_host': 'localhost',
                     'proxy_port': 8001
@@ -40,7 +40,7 @@ class Config:
                     'address': 'dns.google',
                     'ip': '8.8.4.4',
                     'port': 853,
-                    'weight': 0
+                    'weight': 100
                 },
                 {
                     'protocol': 'plain',
@@ -73,7 +73,7 @@ class Config:
 
             'client_blacklist': [
                 '1.0.0.1',
-                '172.100.100.100'
+                '127.100.100.100'
             ]
         }
 
