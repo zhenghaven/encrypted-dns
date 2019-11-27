@@ -18,6 +18,7 @@ class Controller:
 
         self.cache = {}
         self.enable_cache = self.dns_config['enable_cache']
+        self.hosts = self.load_hosts()
 
         self.dns_bypass_china = self.dns_config['dns_bypass_china']
         if self.dns_bypass_china:
@@ -33,6 +34,27 @@ class Controller:
             self.logger.create_log()
 
         self.init_listen()
+
+    def load_hosts(self):
+        hosts = self.dns_config['hosts']
+        hosts_safe_search = {
+            "www.google.*": "forcesafesearch.google.com",
+            "www.bing.com": "strict.bing.com",
+            "www.youtube.com": "restrictmoderate.youtube.com",
+            "m.youtube.com": "restrictmoderate.youtube.com",
+            "youtubei.googleapis.com": "restrictmoderate.youtube.com",
+            "youtube.googleapis.com": "restrictmoderate.youtube.com",
+            "www.youtube-nocookie.com": "restrictmoderate.youtube.com"
+        }
+
+        if self.dns_config['force_safe_search']:
+            hosts.update(hosts_safe_search)
+        for name in hosts:
+            if utils.is_valid_ipv4_address(hosts[name]):
+                hosts[name] = [hosts[name], 'A']
+            else:
+                hosts[name] = [hosts[name], 'CNAME']
+        return hosts
 
     def init_listen(self):
         listen_config = self.dns_config['listen']
@@ -116,13 +138,22 @@ class Controller:
             query_type = parse_result[1]['QTYPE']
             query_name = utils.get_domain_name_string(query_name_list)
 
+            if query_name in self.hosts:
+                record = self.hosts[query_name]
+
             if self.enable_log:
                 self.logger.write_log('query_parse_result:' + str(parse_result))
 
             cache_query = None
             cached = False
 
-            if self.enable_cache and query_name in self.cache and query_type in self.cache[query_name]:
+            if query_name in self.hosts and query_type == self.hosts[query_name][1]:
+                if query_type == 'A':
+                    pass
+                    # sendback_address = self.dns_map[transaction_id][0]
+                    # self.server.sendto(structed_query_result, sendback_address)
+                    # self.dns_map.pop(transaction_id)
+            elif self.enable_cache and query_name in self.cache and query_type in self.cache[query_name]:
                 cache_query = self.cache[query_name][query_type]
                 cache_time = cache_query[1]
                 cache_ttl = cache_query[2]

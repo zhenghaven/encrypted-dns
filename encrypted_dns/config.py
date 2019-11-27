@@ -80,7 +80,13 @@ class Config:
             'client_blacklist': [
                 '1.0.0.1',
                 '127.100.100.100'
-            ]
+            ],
+
+            'force_safe_search': True,
+            'hosts': {
+                'www.instagram.com': '31.13.82.174',
+                'www.bbc.co.uk': '212.58.244.69'
+            }
         }
 
         self.config = {}
