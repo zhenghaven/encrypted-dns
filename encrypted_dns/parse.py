@@ -83,7 +83,7 @@ class ParseAnswer:
                 record = address.rstrip('.')
 
             elif record_type == 'CNAME':
-                pass
+                record = utils.get_domain_name_from_question_data(record)
 
             answer_list.append(
                 {'domain_name': domain_parts,
