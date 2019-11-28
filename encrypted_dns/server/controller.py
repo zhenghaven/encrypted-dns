@@ -95,8 +95,10 @@ class Controller:
                                 else:
                                     ip_address = response[2][0]['record']
 
-                                if self.dns_map[transaction_id][1] == 1 or utils.is_subnet_address(self.net_list,
-                                                                                                   ip_address):
+                                if self.dns_map[transaction_id][1] == 1 or (
+                                        utils.is_valid_ipv4_address(ip_address) and utils.is_subnet_address(
+                                    self.net_list,
+                                    ip_address)):
                                     self.server.sendto(recv_data, sendback_address)
                                     self.dns_map.pop(transaction_id)
                                 elif self.dns_map[transaction_id][1] == 0:
@@ -116,6 +118,7 @@ class Controller:
                                 if response_name not in self.cache:
                                     self.cache[response_name] = {}
                                 self.cache[response_name][response_type] = [recv_data, int(time.time()), response_ttl]
+
         except socket.timeout as exc:
             print('[Error]', str(exc))
             self.start()
@@ -138,9 +141,6 @@ class Controller:
             query_type = parse_result[1]['QTYPE']
             query_name = utils.get_domain_name_string(query_name_list)
 
-            if query_name in self.hosts:
-                record = self.hosts[query_name]
-
             if self.enable_log:
                 self.logger.write_log('query_parse_result:' + str(parse_result))
 
@@ -148,11 +148,13 @@ class Controller:
             cached = False
 
             if query_name in self.hosts and query_type == self.hosts[query_name][1]:
-                if query_type == 'A':
-                    pass
-                    # sendback_address = self.dns_map[transaction_id][0]
-                    # self.server.sendto(structed_query_result, sendback_address)
-                    # self.dns_map.pop(transaction_id)
+                response_data = utils.struct_response(query_name, str(transaction_id), self.hosts[query_name][0],
+                                                      query_type)
+                sendback_address = self.dns_map[transaction_id][0]
+                self.server.sendto(response_data, sendback_address)
+                self.dns_map.pop(transaction_id)
+                return
+
             elif self.enable_cache and query_name in self.cache and query_type in self.cache[query_name]:
                 cache_query = self.cache[query_name][query_type]
                 cache_time = cache_query[1]
@@ -166,7 +168,6 @@ class Controller:
 
             if cached:
                 cache_query_result = cache_query[0]
-
                 cache_query_result = bytes.fromhex(transaction_id) + cache_query_result[2:]
                 sendback_address = self.dns_map[transaction_id][0]
                 self.server.sendto(cache_query_result, sendback_address)

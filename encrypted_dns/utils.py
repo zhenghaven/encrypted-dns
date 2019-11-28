@@ -1,18 +1,13 @@
-import socket
 import ipaddress
+
 from encrypted_dns import parse, struct
 
 
 def is_valid_ipv4_address(address):
     try:
-        socket.inet_pton(socket.AF_INET, address)
-    except AttributeError:
-        try:
-            socket.inet_aton(address)
-        except socket.error:
-            return False
-        return address.count('.') == 3
-    except socket.error:
+        ipaddress.ip_address(address)
+        return True
+    except Exception:
         return False
 
 
@@ -129,7 +124,7 @@ def is_subnet_address(net_list, ip_address):
                 return True
         return False
     except Exception as exc:
-        print(exc)
+        print('[Error]', str(exc))
 
 
 def get_domain_name_string(query_name_list):
@@ -181,3 +176,7 @@ def get_ip_address(client_object, address, bootstrap_dns_object):
             address = response[2][0]['record']
             return address
 
+
+def struct_response(address, transaction_id, record, response_type):
+    response_struct = struct.StructResponse(address, transaction_id, record, response_type=response_type)
+    return response_struct.struct()
