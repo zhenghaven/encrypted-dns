@@ -143,3 +143,22 @@ If you set `enable_cache` to `True`, responses will be cached based on the TTL.
 ```
 'enable_cache': True
 ```
+
+#### Hosts
+
+Manually set A or CNAME record for specific domain name.
+
+```
+'hosts': {
+    'www.instagram.com': '31.13.82.174',
+    'www.bbc.co.uk': '212.58.244.69'
+}
+```
+
+#### Force SafeSearch (强制安全搜索)
+
+Enable SafeSearch Mode for Google, Bing, and Youtube to filter harmful content.
+
+```
+'force_safe_search': True
+```

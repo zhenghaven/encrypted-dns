@@ -147,3 +147,22 @@ Encrypted-DNS 不会把对该列表内的域名的 DNS 请求转发至上游 DNS
 ```
 'enable_cache': True
 ```
+
+#### Hosts
+
+强制将指定域名解析到指定 IP 地址或别名.
+
+```
+'hosts': {
+    'www.instagram.com': '31.13.82.174',
+    'www.bbc.co.uk': '212.58.244.69'
+}
+```
+
+#### Force SafeSearch (强制安全搜索)
+
+强制对 Google, Bing, 和 Youtube 使用安全搜索模式, 过滤不良信息.
+
+```
+'force_safe_search': True
+```
