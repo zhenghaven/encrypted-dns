@@ -23,7 +23,7 @@ setuptools.setup(
     python_requires='>=3.6',
     entry_points={
         'console_scripts': [
-            'encrypted-dns = encrypted_dns.main:start'
+            'encrypted-dns=encrypted_dns.main:start'
         ],
     },
     keywords='dns doh dot tls https',

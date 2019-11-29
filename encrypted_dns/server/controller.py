@@ -129,7 +129,7 @@ class Controller:
             self.start()
 
         except KeyboardInterrupt:
-            print('Stop DNS Server')
+            print('Stop Encrypted-DNS Resolver')
             exit()
 
         except Exception as exc:
@@ -195,7 +195,7 @@ class Controller:
             print('[Error]', str(exc))
 
         except KeyboardInterrupt:
-            print('Stop DNS Server')
+            print('Stop Encrypted-DNS Resolver')
             exit()
 
         except Exception as exc:
