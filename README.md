@@ -21,7 +21,7 @@ $ python3 -m pip install encrypted-dns
 * Generate and edit config file.
 
 ```
-$ sudo encrypted-dns --init
+$ sudo encrypted-dns
 $ vim ~/.config/encrypted_dns/config.json
 ```
 

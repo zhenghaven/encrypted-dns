@@ -22,7 +22,7 @@ $ python3 -m pip install encrypted-dns
 * 生成并编辑配置文件.
 
 ```
-$ sudo encrypted-dns --init
+$ sudo encrypted-dns
 $ vim ~/.config/encrypted_dns/config.json
 ```
 
