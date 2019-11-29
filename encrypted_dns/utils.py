@@ -177,6 +177,7 @@ def get_ip_address(client_object, address, bootstrap_dns_object):
             return address
 
 
-def struct_response(address, transaction_id, record, response_type):
-    response_struct = struct.StructResponse(address, transaction_id, record, response_type=response_type)
+def struct_response(address, transaction_id, question_type, record, record_type):
+    response_struct = struct.StructResponse(address, transaction_id, record, question_type=question_type,
+                                            record_type=record_type)
     return response_struct.struct()

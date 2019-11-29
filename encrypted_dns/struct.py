@@ -61,32 +61,29 @@ class StructQuery:
 
 
 class StructResponse:
-    def __init__(self, address, transaction_id, record, response_type='A'):
+    def __init__(self, address, transaction_id, record, record_type='A', question_type='A'):
         self.address = address
         self.record = record
-        self.response_type = response_type
+        self.question_type = question_type
+        self.record_type = record_type
         self.transaction_id = bytes.fromhex(transaction_id)
 
     def struct(self):
         response_data = bytes()
-        if self.response_type == 'A':
-            header = struct_header(self.transaction_id, qr=1, ancount=1)
-            question = struct_question(self.address, self.response_type)
 
-            compression_offset = len(header) + 49152
-            compression_offset = compression_offset.to_bytes(2, byteorder='big')
+        header = struct_header(self.transaction_id, qr=1, ancount=1)
+        question = struct_question(self.address, self.question_type)
 
-            answer = self.struct_answer(self.record, offset=compression_offset)
-            response_data += header
-            response_data += question
-            response_data += answer
-            return response_data
-
-        elif self.response_type == 'CNAME':
-            return None
+        compression_offset = len(header) + 49152
+        compression_offset = compression_offset.to_bytes(2, byteorder='big')
+        answer = self.struct_answer(self.record, question_type=self.question_type, record_type=self.record_type, offset=compression_offset)
+        response_data += header
+        response_data += question
+        response_data += answer
+        return response_data
 
     @staticmethod
-    def struct_answer(record, record_type='A', record_class='IN', ttl=300, offset=None, address=None):
+    def struct_answer(record, record_type='A', question_type='A', record_class='IN', ttl=300, offset=None, address=None):
         answer_data = bytes()
         record_data = bytes()
 
@@ -97,7 +94,7 @@ class StructResponse:
             for part in address_list:
                 answer_data += len(part).to_bytes(1, byteorder='big')
                 answer_data += part.encode('utf-8')
-            answer_data += b'0x00'
+            answer_data += b'\x00'
         else:
             return None
 
@@ -110,7 +107,15 @@ class StructResponse:
             for part in record:
                 record_data += int(part).to_bytes(1, byteorder='big')
 
+        if record_type == 'CNAME':
+            record_list = record.split('.')
+            for part in record_list:
+                record_data += len(part).to_bytes(1, byteorder='big')
+                record_data += part.encode('utf-8')
+            record_data += b'\x00'
+            
         record_length = len(record_data)
         answer_data += record_length.to_bytes(2, byteorder='big')
         answer_data += record_data
+
         return answer_data
