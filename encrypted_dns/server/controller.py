@@ -57,13 +57,18 @@ class Controller:
         return hosts
 
     def init_listen(self):
-        listen_config = self.dns_config['listen']
-        for listen in listen_config:
-            listen['client_blacklist'] = self.dns_config['client_blacklist']
-            if listen['protocol'] == 'udp':
-                listen_object = server.UDPServer(listen, (self.controller_address, self.controller_port))
-                self.listen_thread_list.append(
-                    threading.Thread(target=listen_object.start, args=(), daemon=True).start())
+        try:
+            listen_config = self.dns_config['listen']
+            for listen in listen_config:
+                listen['client_blacklist'] = self.dns_config['client_blacklist']
+                if listen['protocol'] == 'udp':
+                    listen_object = server.UDPServer(listen, (self.controller_address, self.controller_port))
+                    self.listen_thread_list.append(
+                        threading.Thread(target=listen_object.start, args=(), daemon=True).start())
+
+        except OSError as exc:
+            print(str(exc))
+            exit()
 
     def start(self):
         try:
@@ -124,6 +129,7 @@ class Controller:
             self.start()
 
         except KeyboardInterrupt:
+            print('Stop DNS Server')
             exit()
 
         except Exception as exc:
@@ -187,8 +193,11 @@ class Controller:
 
         except IndexError as exc:
             print('[Error]', str(exc))
+
         except KeyboardInterrupt:
+            print('Stop DNS Server')
             exit()
+
         except Exception as exc:
             print('[Error]', str(exc))
 
