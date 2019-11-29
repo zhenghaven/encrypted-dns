@@ -38,7 +38,7 @@ class Controller:
     def load_hosts(self):
         hosts = self.dns_config['hosts']
         hosts_safe_search = {
-            "www.google.*": "forcesafesearch.google.com",
+            "www.google.com": "forcesafesearch.google.com",
             "www.bing.com": "strict.bing.com",
             "www.youtube.com": "restrictmoderate.youtube.com",
             "m.youtube.com": "restrictmoderate.youtube.com",
@@ -147,9 +147,10 @@ class Controller:
             cache_query = None
             cached = False
 
-            if query_name in self.hosts and query_type == self.hosts[query_name][1]:
-                response_data = utils.struct_response(query_name, str(transaction_id), self.hosts[query_name][0],
-                                                      query_type)
+            if query_name in self.hosts:
+                response_data = utils.struct_response(query_name, str(transaction_id),
+                                                      query_type, self.hosts[query_name][0], self.hosts[query_name][1])
+                print(self.handle_response(response_data))
                 sendback_address = self.dns_map[transaction_id][0]
                 self.server.sendto(response_data, sendback_address)
                 self.dns_map.pop(transaction_id)
