@@ -16,7 +16,7 @@ Encrypted-DNS 是一个用于转发 DNS 请求的 DNS 服务器. 它支持 UDP, 
 * 克隆 Github 仓库.
 
 ```
-$ git clone git@github.com:Siujoeng-Lau/Encrypted-DNS.git
+$ git clone https://github.com/Siujoeng-Lau/Encrypted-DNS.git
 ```
 
 * 运行 Encrypted-DNS 服务器.

@@ -150,7 +150,6 @@ class Controller:
             if query_name in self.hosts:
                 response_data = utils.struct_response(query_name, str(transaction_id),
                                                       query_type, self.hosts[query_name][0], self.hosts[query_name][1])
-                print(self.handle_response(response_data))
                 sendback_address = self.dns_map[transaction_id][0]
                 self.server.sendto(response_data, sendback_address)
                 self.dns_map.pop(transaction_id)
