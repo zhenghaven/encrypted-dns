@@ -57,7 +57,7 @@ class Config:
             ],
 
             'bootstrap_dns_address': {
-                'address': '1.2.4.8',
+                'address': '1.1.1.1',
                 'port': 53
             },
 
@@ -82,10 +82,9 @@ class Config:
                 '127.100.100.100'
             ],
 
-            'force_safe_search': True,
+            'force_safe_search': False,
             'hosts': {
-                'www.instagram.com': '31.13.82.174',
-                'www.bbc.co.uk': '212.58.244.69'
+                'localhost': '127.0.0.1'
             }
         }
 

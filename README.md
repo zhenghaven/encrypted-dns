@@ -15,7 +15,7 @@ Languages: [English](https://github.com/Siujoeng-Lau/Encrypted-DNS/blob/master/R
 * Clone Github Repository.
 
 ```
-$ git clone git@github.com:Siujoeng-Lau/Encrypted-DNS.git
+$ git clone https://github.com/Siujoeng-Lau/Encrypted-DNS.git
 ```
 
 * Run Encrypted-DNS Server.
@@ -155,7 +155,7 @@ Manually set A or CNAME record for specific domain name.
 }
 ```
 
-#### Force SafeSearch (强制安全搜索)
+#### Force SafeSearch
 
 Enable SafeSearch Mode for Google, Bing, and Youtube to filter harmful content.
 
