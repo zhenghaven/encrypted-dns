@@ -89,7 +89,8 @@ class Config:
         }
 
         self.config = {}
-        self.file_name = 'config.json'
+        self.home = os.path.expanduser("~")
+        self.file_name = self.home.rstrip('/') + '/.config/encrypted_dns/config.json'
 
         self.load()
 
@@ -116,6 +117,12 @@ class Config:
             self.config = json.loads(config_file.read())
 
     def save(self):
+        if not os.path.exists(self.home.rstrip('/') + '/.config/'):
+            os.makedirs(self.home.rstrip('/') + '/.config/')
+
+        if not os.path.exists(self.home.rstrip('/') + '/.config/encrypted_dns'):
+            os.makedirs(self.home.rstrip('/') + '/.config/encrypted_dns')
+
         config_json = json.dumps(self.config, indent=4)
         config_file = open(self.file_name, "w")
         config_file.write(config_json)
