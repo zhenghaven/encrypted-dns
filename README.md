@@ -1,7 +1,7 @@
 # Encrypted-DNS
 [![License](https://img.shields.io/github/license/Siujoeng-Lau/Encrypted-DNS.svg?style=for-the-badge)](https://github.com/Siujoeng-Lau/Encrypted-DNS/blob/master/LICENSE)
-[![Pull requests](https://img.shields.io/github/issues-pr-closed/Siujoeng-Lau/Encrypted-DNS?style=for-the-badge)](https://github.com/Siujoeng-Lau/Encrypted-DNS/pulls)
-[![GitHub stars](https://img.shields.io/github/stars/Siujoeng-Lau/Encrypted-DNS?style=for-the-badge)](https://github.com/Siujoeng-Lau/Encrypted-DNS/stargazers)
+[![Releases](https://img.shields.io/github/v/release/Siujoeng-Lau/Encrypted-DNS?style=for-the-badge)](https://github.com/Siujoeng-Lau/Encrypted-DNS/releases)
+[![Downloads](https://img.shields.io/pypi/dm/encrypted-dns?style=for-the-badge)](https://pypi.org/project/encrypted-dns/)
 
 Encrypted-DNS operates as a DNS server that forward DNS queries over UDP, TCP, TLS or HTTPS, thus preventing your device from DNS cache poisoning and censorship.
 It could also cache DNS records to accelerate further queries, block specific client, and ignore particular domain names.

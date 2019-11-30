@@ -19,10 +19,7 @@ class Controller:
         self.cache = {}
         self.enable_cache = self.dns_config['enable_cache']
         self.hosts = self.load_hosts()
-
         self.dns_bypass_china = self.dns_config['dns_bypass_china']
-        if self.dns_bypass_china:
-            self.net_list = [line.rstrip('\n') for line in open('chnroute.txt')]
 
         upstream_timeout = self.dns_config['upstream_timeout']
         self.bootstrap_dns_object = upstream.UDPUpstream(self, self.controller_port,
@@ -102,8 +99,8 @@ class Controller:
 
                                 if self.dns_map[transaction_id][1] == 1 or (
                                         utils.is_valid_ipv4_address(ip_address) and utils.is_subnet_address(
-                                    self.net_list,
-                                    ip_address)):
+                                        'chnroute.txt', ip_address)
+                                ):
                                     self.server.sendto(recv_data, sendback_address)
                                     self.dns_map.pop(transaction_id)
                                 elif self.dns_map[transaction_id][1] == 0:
