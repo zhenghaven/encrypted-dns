@@ -119,9 +119,15 @@ def is_subnet_address(net_list, ip_address):
     try:
         if not net_list or isinstance(ip_address, bytes):
             return False
-        for net in net_list:
-            if ipaddress.ip_address(ip_address) in ipaddress.ip_network(net):
-                return True
+        if isinstance(net_list, str):
+            with open(net_list) as file:
+                for net in file:
+                    if ipaddress.ip_address(ip_address) in ipaddress.ip_network(net.strip()):
+                        return True
+        else:
+            for net in net_list:
+                if ipaddress.ip_address(ip_address) in ipaddress.ip_network(net):
+                    return True
         return False
     except Exception as exc:
         print('[Error]', str(exc))
