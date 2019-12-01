@@ -99,7 +99,7 @@ class Controller:
 
                                 if self.dns_map[transaction_id][1] == 1 or (
                                         utils.is_valid_ipv4_address(ip_address) and utils.is_subnet_address(
-                                        'chnroute.txt', ip_address)
+                                        'filter_lists/chnroute.txt', ip_address)
                                 ):
                                     self.server.sendto(recv_data, sendback_address)
                                     self.dns_map.pop(transaction_id)
