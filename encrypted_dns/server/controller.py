@@ -85,41 +85,37 @@ class Controller:
                     query_thread.daemon = True
                     query_thread.start()
 
-                elif recv_header['flags']['QR'] == '1':
-                    if transaction_id in self.dns_map:
-                        response = self.handle_response(recv_data)
-                        sendback_address = self.dns_map[transaction_id][0]
+                elif recv_header['flags']['QR'] == '1' and transaction_id in self.dns_map:
+                    response = self.handle_response(recv_data)
+                    sendback_address = self.dns_map[transaction_id][0]
 
-                        if self.dns_bypass_china:
-                            if response[2]:
-                                if len(response[2]) > 1:
-                                    ip_address = response[2][-1]['record']
-                                else:
-                                    ip_address = response[2][0]['record']
-
-                                if self.dns_map[transaction_id][1] == 1 or (
-                                        utils.is_valid_ipv4_address(ip_address) and utils.is_subnet_address(
-                                        'filter_lists/chnroute.txt', ip_address)
-                                ):
-                                    self.server.sendto(recv_data, sendback_address)
-                                    self.dns_map.pop(transaction_id)
-                                elif self.dns_map[transaction_id][1] == 0:
-                                    self.dns_map[transaction_id][1] = 1
+                    if self.dns_bypass_china and response[2]:
+                        if len(response[2]) > 1:
+                            ip_address = response[2][-1]['record']
                         else:
+                            ip_address = response[2][0]['record']
+
+                        if self.dns_map[transaction_id][1] == 1 or (
+                                utils.is_valid_ipv4_address(ip_address) and utils.is_subnet_address(
+                                'filter_lists/chnroute.txt', ip_address)
+                        ):
                             self.server.sendto(recv_data, sendback_address)
                             self.dns_map.pop(transaction_id)
+                        elif self.dns_map[transaction_id][1] == 0:
+                            self.dns_map[transaction_id][1] = 1
+                            continue
                     else:
-                        continue
+                        self.server.sendto(recv_data, sendback_address)
+                        self.dns_map.pop(transaction_id)
 
-                    if self.enable_cache:
-                        if response[2]:
-                            response_name = utils.get_domain_name_string(response[2][0]['domain_name'])
-                            if response_name != '':
-                                response_type = response[2][0]['type']
-                                response_ttl = response[2][0]['ttl']
-                                if response_name not in self.cache:
-                                    self.cache[response_name] = {}
-                                self.cache[response_name][response_type] = [recv_data, int(time.time()), response_ttl]
+                    if self.enable_cache and response[2]:
+                        response_name = utils.get_domain_name_string(response[1]['QNAME'])
+                        if response_name != '':
+                            response_type = response[1]['QTYPE']
+                            response_ttl = response[2][0]['ttl']
+                            if response_name not in self.cache:
+                                self.cache[response_name] = {}
+                            self.cache[response_name][response_type] = [recv_data, int(time.time()), response_ttl]
 
         except socket.timeout as exc:
             print('[Error]', str(exc))
