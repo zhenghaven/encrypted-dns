@@ -117,3 +117,4 @@ dmypy.json
 # Encrypted-DNS
 config.json
 logs/*
+encrypted_dns/test.py

@@ -5,14 +5,17 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="encrypted-dns",
-    version="1.0.0",
+    version="1.1.0",
     author="Xiaoyang Liu",
     author_email="admin@siujoeng-lau.com",
     description="DNS-over-HTTPS and DNS-over-TLS server and forwarder.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/Siujoeng-Lau/Encrypted-DNS",
-    packages=setuptools.find_packages(),
+    packages=['encrypted_dns'],
+    package_data={
+        'encrypted_dns': ['filter_lists/*.txt'],
+    },
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: Apache Software License",

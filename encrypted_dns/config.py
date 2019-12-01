@@ -2,7 +2,7 @@ import json
 import os
 
 
-class Config:
+class Configuration:
 
     def __init__(self):
         self.DEFAULT_CONFIG = {
@@ -83,6 +83,9 @@ class Config:
             ],
 
             'force_safe_search': False,
+            'block_ads': True,
+            'block_porn': True,
+            'block_malware': True,
             'hosts': {
                 'localhost': '127.0.0.1'
             }
@@ -91,7 +94,6 @@ class Config:
         self.config = {}
         self.home = os.path.expanduser("~")
         self.file_name = self.home.rstrip('/') + '/.config/encrypted_dns/config.json'
-
         self.load()
 
     def get_config(self, key=None):
@@ -118,6 +120,7 @@ class Config:
         else:
             config_file = open(self.file_name)
             self.config = json.loads(config_file.read())
+            print('Load config file:', self.file_name)
 
     def save(self):
         if not os.path.exists(self.home.rstrip('/') + '/.config/'):
