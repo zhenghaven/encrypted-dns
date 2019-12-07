@@ -34,18 +34,12 @@ class Controller:
 
     def load_hosts(self):
         hosts = self.dns_config['hosts']
-        hosts_safe_search = {
-            "www.google.com": "forcesafesearch.google.com",
-            "www.bing.com": "strict.bing.com",
-            "www.youtube.com": "restrictmoderate.youtube.com",
-            "m.youtube.com": "restrictmoderate.youtube.com",
-            "youtubei.googleapis.com": "restrictmoderate.youtube.com",
-            "youtube.googleapis.com": "restrictmoderate.youtube.com",
-            "www.youtube-nocookie.com": "restrictmoderate.youtube.com"
-        }
 
         if self.dns_config['force_safe_search']:
-            hosts.update(hosts_safe_search)
+            hosts.update(utils.load_hosts_from_file('filter_lists/safe_search.txt'))
+        if self.dns_config['block_ads']:
+            hosts.update(utils.load_hosts_from_file('filter_lists/ads.txt'))
+
         for name in hosts:
             if utils.is_valid_ipv4_address(hosts[name]):
                 hosts[name] = [hosts[name], 'A']

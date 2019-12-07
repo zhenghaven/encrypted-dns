@@ -187,3 +187,15 @@ def struct_response(address, transaction_id, question_type, record, record_type)
     response_struct = struct.StructResponse(address, transaction_id, record, question_type=question_type,
                                             record_type=record_type)
     return response_struct.struct()
+
+
+def load_hosts_from_file(file_name):
+    hosts = {}
+    with open(file_name) as file:
+        for record in file:
+            record = record.strip().split()
+            if len(record) == 1:
+                record.append('0.0.0.0')
+            if len(record) != 0:
+                hosts[record[0]] = record[1]
+    return hosts
