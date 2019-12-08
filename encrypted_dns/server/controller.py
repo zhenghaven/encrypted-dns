@@ -7,7 +7,6 @@ from encrypted_dns import upstream, parse, utils, log, server
 
 
 class Controller:
-
     def __init__(self, dns_config_object):
         self.server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.server.bind(('', 0))
@@ -91,7 +90,7 @@ class Controller:
 
                         if self.dns_map[transaction_id][1] == 1 or (
                                 utils.is_valid_ipv4_address(ip_address) and utils.is_subnet_address(
-                                'filter_lists/chnroute.txt', ip_address)
+                            'filter_lists/chnroute.txt', ip_address)
                         ):
                             self.server.sendto(recv_data, sendback_address)
                             self.dns_map.pop(transaction_id)
@@ -140,15 +139,17 @@ class Controller:
             cache_query = None
             cached = False
 
-            if query_name in self.hosts:
-                response_data = utils.struct_response(query_name, str(transaction_id),
-                                                      query_type, self.hosts[query_name][0], self.hosts[query_name][1])
-                sendback_address = self.dns_map[transaction_id][0]
-                self.server.sendto(response_data, sendback_address)
-                self.dns_map.pop(transaction_id)
-                return
+            for item in self.hosts.keys():
+                if query_name == item or (item.startswith("include:") and item.lstrip("include:") in query_name):
+                    response_data = utils.struct_response(query_name, str(transaction_id),
+                                                          query_type, self.hosts[item][0],
+                                                          self.hosts[item][1])
+                    sendback_address = self.dns_map[transaction_id][0]
+                    self.server.sendto(response_data, sendback_address)
+                    self.dns_map.pop(transaction_id)
+                    return
 
-            elif self.enable_cache and query_name in self.cache and query_type in self.cache[query_name]:
+            if self.enable_cache and query_name in self.cache and query_type in self.cache[query_name]:
                 cache_query = self.cache[query_name][query_type]
                 cache_time = cache_query[1]
                 cache_ttl = cache_query[2]
@@ -187,6 +188,7 @@ class Controller:
 
         except Exception as exc:
             print('[Error]', str(exc))
+            raise exc
 
     def select_upstream(self):
         upstream_dns_list = self.dns_config['upstream_dns']
