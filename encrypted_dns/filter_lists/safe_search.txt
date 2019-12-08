@@ -1,4 +1,4 @@
-www.google.com             forcesafesearch.google.com
+include:www.google       forcesafesearch.google.com
 
 www.bing.com             strict.bing.com
 

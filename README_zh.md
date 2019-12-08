@@ -57,35 +57,35 @@ Encrypted-DNS 支持以下协议: `udp`, `tcp`, `tls`, 和 `https`.
 你可以指定使用 DNS-over-HTTPS 和 DNS-over-TLS 协议的服务器的 IP 地址, 来避免 DNS 缓存污染.
 
 ```
-'upstream_dns': [
+"upstream_dns": [
     {
-        'protocol': 'https',
-        'address': 'cloudflare-dns.com',
-        'ip': '1.0.0.1',
-        'port': 443,
-        'weight': 0,
-        'enable_http_proxy': False,
-        'proxy_host': 'localhost',
-        'proxy_port': 8001
+        "protocol": "https",
+        "address": "cloudflare-dns.com",
+        "ip": "1.0.0.1",
+        "port": 443,
+        "weight": 0,
+        "enable_http_proxy": False,
+        "proxy_host": "localhost",
+        "proxy_port": 8001
     },
     {
-        'protocol': 'tls',
-        'address': 'dns.google',
-        'ip': '8.8.4.4',
-        'port': 853,
-        'weight': 100
+        "protocol": "tls",
+        "address": "dns.google",
+        "ip": "8.8.4.4",
+        "port": 853,
+        "weight": 100
     },
     {
-        'protocol': 'udp',
-        'address': '9.9.9.9',
-        'port': 53,
-        'weight': 0
+        "protocol": "udp",
+        "address": "9.9.9.9",
+        "port": 53,
+        "weight": 0
     },
     {
-        'protocol': 'tcp',
-        'address': '8.8.4.4',
-        'port': 53,
-        'weight': 0
+        "protocol": "tcp",
+        "address": "8.8.4.4",
+        "port": 53,
+        "weight": 0
     }
 }
 ```
@@ -97,9 +97,9 @@ Encrypted-DNS 支持以下协议: `udp`, `tcp`, `tls`, 和 `https`.
 如果你没有指定 DNS-over-TLS 或 DNS-over-HTTPS 协议服务器的 IP 地址, Encrypted-DNS 将会向 Bootstrap DNS 服务器查询其对应地址.
 
 ```
-'bootstrap_dns_address': {
-    'address': '1.0.0.1',
-    'port': 53
+"bootstrap_dns_address": {
+    "address": "1.0.0.1",
+    "port": 53
 }
 ```
 
@@ -110,9 +110,9 @@ Encrypted-DNS 支持以下协议: `udp`, `tcp`, `tls`, 和 `https`.
 Encrypted-DNS 将会屏蔽来自该列表内的 IP 地址的 DNS 请求.
 
 ```
-'client_blacklist': [
-    '1.0.0.1',
-    '172.100.100.100'
+"client_blacklist": [
+    "1.0.0.1",
+    "172.100.100.100"
 ]
 ```
 
@@ -123,7 +123,7 @@ Encrypted-DNS 不会把对该列表内的域名的 DNS 请求转发至上游 DNS
 请求将会被转发到 Bootstrap DNS Address (备用 DNS 服务器).
 
 ```
-'dns_bypass': [
+"dns_bypass": [
     "captive.apple.com",
     "connectivitycheck.gstatic.com",
     "detectportal.firefox.com",
@@ -144,14 +144,14 @@ Encrypted-DNS 不会把对该列表内的域名的 DNS 请求转发至上游 DNS
 如果开启此功能, Encrypted-DNS 将会把对于中国大陆域名的请求转发至 Bootstrap DNS Address (备用 DNS 服务器), 而将其他地区的域名转发至上游. 
 
 ```
-'dns_bypass_china': True
+"dns_bypass_china": true
 ```
 
 #### DNS Cache (DNS 缓存)
 
 如果开启此功能, Encrypted-DNS 将会依据 `TTL` 对请求结果进行缓存, 减少下次查询的延迟.
 ```
-'enable_cache': True
+"enable_cache": true
 ```
 
 #### Hosts
@@ -159,9 +159,9 @@ Encrypted-DNS 不会把对该列表内的域名的 DNS 请求转发至上游 DNS
 强制将指定域名解析到指定 IP 地址或别名.
 
 ```
-'hosts': {
-    'www.instagram.com': '31.13.82.174',
-    'www.bbc.co.uk': '212.58.244.69'
+"hosts": {
+    "www.instagram.com": "31.13.82.174",
+    "www.bbc.co.uk": "212.58.244.69"
 }
 ```
 
@@ -170,5 +170,13 @@ Encrypted-DNS 不会把对该列表内的域名的 DNS 请求转发至上游 DNS
 强制对 Google, Bing, 和 Youtube 使用安全搜索模式, 过滤不良信息.
 
 ```
-'force_safe_search': True
+"force_safe_search": true
+```
+
+#### Block Ads (屏蔽广告)
+
+屏蔽常见的广告域名.
+
+```
+"block_ads": true
 ```

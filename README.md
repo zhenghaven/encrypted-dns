@@ -56,35 +56,35 @@ Encrypted-DNS supports three protocols: `udp`, `tcp`, `tls`, and `https`.
 You may specify the ip address of DNS-over-HTTPS or DNS-over-TLS server to avoid DNS cache poisoning.
 
 ```
-'upstream_dns': [
+"upstream_dns": [
     {
-        'protocol': 'https',
-        'address': 'cloudflare-dns.com',
-        'ip': '1.0.0.1',
-        'port': 443,
-        'weight': 0,
-        'enable_http_proxy': False,
-        'proxy_host': 'localhost',
-        'proxy_port': 8001
+        "protocol": "https",
+        "address": "cloudflare-dns.com",
+        "ip": "1.0.0.1",
+        "port": 443,
+        "weight": 0,
+        "enable_http_proxy": False,
+        "proxy_host": "localhost",
+        "proxy_port": 8001
     },
     {
-        'protocol': 'tls',
-        'address': 'dns.google',
-        'ip': '8.8.4.4',
-        'port': 853,
-        'weight': 100
+        "protocol": "tls",
+        "address": "dns.google",
+        "ip": "8.8.4.4",
+        "port": 853,
+        "weight": 100
     },
     {
-        'protocol': 'udp',
-        'address': '9.9.9.9',
-        'port': 53,
-        'weight': 0
+        "protocol": "udp",
+        "address": "9.9.9.9",
+        "port": 53,
+        "weight": 0
     },
     {
-        'protocol': 'tcp',
-        'address': '8.8.4.4',
-        'port': 53,
-        'weight': 0
+        "protocol": "tcp",
+        "address": "8.8.4.4",
+        "port": 53,
+        "weight": 0
     }
 }
 ```
@@ -95,9 +95,9 @@ If you add multiple upstream servers, each DNS query will be forwarded to a serv
 
 Encrypted-DNS will send a UDP DNS query to the bootstrap DNS server to retrieve the ip address of DNS-over-HTTPS or DNS-over-TLS server unless you specify it.
 ```
-'bootstrap_dns_address': {
-    'address': '1.0.0.1',
-    'port': 53
+"bootstrap_dns_address": {
+    "address": "1.0.0.1",
+    "port": 53
 }
 ```
 
@@ -105,20 +105,20 @@ Encrypted-DNS will send a UDP DNS query to the bootstrap DNS server to retrieve 
 
 You may set the ip addresses of the clients which you want to ignore DNS queries sent by them.
 ```
-'client_blacklist': [
-    '1.0.0.1',
-    '172.100.100.100'
+"client_blacklist": [
+    "1.0.0.1",
+    "172.100.100.100"
 ]
 ```
 
 #### DNS Bypass
 
-You may specify a list of domain names which you don't want to be forward to upstream DNS servers.
+You may specify a list of domain names which you don"t want to be forward to upstream DNS servers.
 
 Queries will be sent to the bootstrap DNS server.
 
 ```
-'dns_bypass': [
+"dns_bypass": [
     "captive.apple.com",
     "connectivitycheck.gstatic.com",
     "detectportal.firefox.com",
@@ -136,18 +136,18 @@ Queries will be sent to the bootstrap DNS server.
 
 #### DNS Bypass China
 
-If you set `dns_bypass_china` to `True`, all the queries related to domain names in China will be redirected to the bootstrap address, which could be set to a public DNS server located in China.
+If you set `dns_bypass_china` to `true`, all the queries related to domain names in China will be redirected to the bootstrap address, which could be set to a public DNS server located in China.
 
 ```
-'dns_bypass_china': True
+"dns_bypass_china": true
 ```
 
 #### DNS Cache
 
-If you set `enable_cache` to `True`, responses will be cached based on the TTL.
+If you set `enable_cache` to `true`, responses will be cached based on the TTL.
 
 ```
-'enable_cache': True
+"enable_cache": true
 ```
 
 #### Hosts
@@ -155,9 +155,9 @@ If you set `enable_cache` to `True`, responses will be cached based on the TTL.
 Manually set A or CNAME record for specific domain name.
 
 ```
-'hosts': {
-    'www.instagram.com': '31.13.82.174',
-    'www.bbc.co.uk': '212.58.244.69'
+"hosts": {
+    "www.instagram.com": "31.13.82.174",
+    "www.bbc.co.uk": "212.58.244.69"
 }
 ```
 
@@ -166,5 +166,13 @@ Manually set A or CNAME record for specific domain name.
 Enable SafeSearch Mode for Google, Bing, and Youtube to filter harmful content.
 
 ```
-'force_safe_search': True
+"force_safe_search": true
+```
+
+#### Block Ads
+
+Block common advertisement domain names.
+
+```
+"block_ads": true
 ```
