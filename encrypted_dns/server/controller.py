@@ -1,3 +1,4 @@
+import os
 import random
 import socket
 import threading
@@ -34,10 +35,11 @@ class Controller:
     def load_hosts(self):
         hosts = self.dns_config['hosts']
 
+        current_dir = os.path.dirname(os.path.abspath(__file__)).rstrip('/').rstrip('server')
         if self.dns_config['force_safe_search']:
-            hosts.update(utils.load_hosts_from_file('filter_lists/safe_search.txt'))
+            hosts.update(utils.load_hosts_from_file(current_dir + 'filter_lists/safe_search.txt'))
         if self.dns_config['block_ads']:
-            hosts.update(utils.load_hosts_from_file('filter_lists/ads.txt'))
+            hosts.update(utils.load_hosts_from_file(current_dir + 'filter_lists/ads.txt'))
 
         for name in hosts:
             if utils.is_valid_ipv4_address(hosts[name]):
