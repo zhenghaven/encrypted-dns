@@ -8,10 +8,11 @@ setuptools.setup(
     version="1.1.4",
     author="Xiaoyang Liu",
     author_email="admin@siujoeng-lau.com",
-    description="DNS-over-HTTPS and DNS-over-TLS server and forwarder.",
+    description="DNS-over-HTTPS and DNS-over-TLS inbound and forwarder.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/Siujoeng-Lau/Encrypted-DNS",
+    install_requires=['dnspython'],
     packages=setuptools.find_packages(),
     package_data={
         'encrypted_dns': ['filter_lists/*.txt'],
