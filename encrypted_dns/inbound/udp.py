@@ -29,5 +29,3 @@ class DatagramHandler(socketserver.BaseRequestHandler):
         resolve_data = None
         datagram_socket = self.request[1]
         datagram_socket.sendto(resolve_data, self.client_address)
-
-
