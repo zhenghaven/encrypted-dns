@@ -9,7 +9,7 @@ class Configuration:
             'enable_log': False,
             'enable_cache': True,
 
-            'listen': [
+            'inbound': [
                 {
                     'protocol': 'udp',
                     'address': '127.0.0.1',
@@ -22,9 +22,9 @@ class Configuration:
                 }
             ],
 
-            'upstream_weight': True,
-            'upstream_timeout': 30,
-            'upstream_dns': [
+            'outbound_weight': True,
+            'outbound_timeout': 30,
+            'outbound': [
                 {
                     'protocol': 'https',
                     'address': 'cloudflare-dns.com',
@@ -44,13 +44,13 @@ class Configuration:
                 },
                 {
                     'protocol': 'udp',
-                    'address': '9.9.9.9',
+                    'ip': '9.9.9.9',
                     'port': 53,
                     'weight': 0
                 },
                 {
                     'protocol': 'tcp',
-                    'address': '8.8.4.4',
+                    'ip': '8.8.4.4',
                     'port': 53,
                     'weight': 0
                 }
