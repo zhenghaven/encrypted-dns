@@ -6,9 +6,9 @@ from encrypted_dns.outbound import BaseOutbound
 class TLSOutbound(BaseOutbound):
     def __init__(self, address, port, timeout):
         super().__init__()
-        self.address = address
-        self.port = port
-        self.timeout = timeout
+        self._address = address
+        self._port = port
+        self._timeout = timeout
 
     @classmethod
     def from_dict(cls, outbound_dict):
@@ -27,4 +27,4 @@ class TLSOutbound(BaseOutbound):
         return cls(address, port, timeout)
 
     def query(self, dns_message):
-        return dns.query.tls(dns_message, self.address, port=self.port, timeout=self.timeout)
+        return dns.query.tls(dns_message, self._address, port=self._port, timeout=self._timeout)

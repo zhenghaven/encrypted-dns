@@ -8,10 +8,10 @@ from encrypted_dns.outbound import BaseOutbound
 class HTTPSOutbound(BaseOutbound):
     def __init__(self, address, port, timeout, proxies):
         super().__init__()
-        self.address = address
-        self.port = port
-        self.timeout = timeout
-        self.proxies = proxies
+        self._address = address
+        self._port = port
+        self._timeout = timeout
+        self._proxies = proxies
 
     @classmethod
     def from_dict(cls, outbound_dict):
@@ -41,5 +41,5 @@ class HTTPSOutbound(BaseOutbound):
             # session=None, path='/dns-query', post=True,
             # bootstrap_address=None, verify=True
             session.proxies = self.proxies
-            return dns.query.https(dns_message, self.address, port=self.port,
-                                   timeout=self.timeout, session=session)
+            return dns.query.https(dns_message, self._address, port=self._port,
+                                   timeout=self._timeout, session=_session)

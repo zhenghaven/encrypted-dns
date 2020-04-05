@@ -1,20 +1,33 @@
 import random
+import time
 
 import encrypted_dns.outbound
 
 import dns.message
 import dns.flags
+import dns.edns
 
 
 class Cache:
     def __init__(self):
         self._cache = {}
 
-    def get(self, name, rtype, rclass):
-        return self._cache[(name, rtype, rclass)]
+    def get_cache_dict(self):
+        return self._cache
 
-    def put(self, name, rtype, rclass, answer):
-        self._cache[(name, rtype, rclass)] = answer
+    def get(self, rrset):
+        if (rrset.name, rrset.rdtype, rrset.rdclass) in self._cache:
+            (response_rrset, ttl, put_time) = self._cache[(rrset.name, rrset.rdtype, rrset.rdclass)]
+            # purge cache if time exceeds ttl
+            if int(time.time()) - put_time >= ttl:
+                self._cache.pop((rrset.name, rrset.rdtype, rrset.rdclass))
+                return None
+            else:
+                return response_rrset, ttl
+        return None
+
+    def put(self, rrset):
+        self._cache[(rrset.name, rrset.rdtype, rrset.rdclass)] = (rrset, rrset.ttl, int(time.time()))
 
     def flush(self):
         self._cache = {}
@@ -62,9 +75,22 @@ class WireMessageHandler:
         pass
 
     @staticmethod
-    def wire_resolve(wire_message, outbound_list):
+    def handle_response(response, cache):
+        for answer in response.answer:
+            cache.put(answer)
+        return response
+
+    @staticmethod
+    def edns_subnet_client(query_message, ip):
+        # srclen is 24 for ipv4, 56 for ipv6
+        query_message.edns = dns.edns.ECSOption(ip, srclen=24, scopelen=0)
+        return query_message
+
+    @staticmethod
+    def wire_resolve(wire_message, outbound_list, cache):
         """
         Parse wire messages received by inbounds and forward them to corresponding outbounds.
+        :param cache: Cache object that stores cached DNS answers.
         :param wire_message: DNS query message received by inbound.
         :param outbound_list: List of outbounds specified in config.json.
         :return: DNS response to the query.
@@ -83,13 +109,22 @@ class WireMessageHandler:
             dns_message = dns.message.from_wire(wire_message)
             message_flags = dns.flags.to_text(dns_message.flags)
 
-            # raise an exception since 'wire_resolve' method should only proce dns queries
-            if 'QR' not in message_flags:
+            # raise an exception since 'wire_resolve' method should only process dns queries
+            if 'QR' in message_flags:
                 raise Exception()
+
+            # retrieve cached rrset from cache
+            question_rrset = dns_message.question[0]
+            cached_response_rrset, ttl = cache.get(question_rrset)
+            if cached_response_rrset:
+                dns_response = dns.message.make_response(dns_message)
+                return dns_response.answer.append(cached_response_rrset)
 
             # list of outbounds in config.json
             outbound, protocol = OutboundHandler.random_outbound(outbound_list, weighted=True)
-            return protocol_methods[protocol].__call__(dns_message, outbound)
+            dns_response = protocol_methods[protocol].__call__(dns_message, outbound)
+            # process response and update cache
+            return WireMessageHandler.handle_response(dns_response, cache)
 
         except dns.message.ShortHeader:
             print('[Error]: The DNS packet passed to from_wire() is too short.')
