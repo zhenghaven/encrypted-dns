@@ -6,6 +6,20 @@ import dns.message
 import dns.flags
 
 
+class Cache:
+    def __init__(self):
+        self._cache = {}
+
+    def get(self, name, rtype, rclass):
+        return self._cache[(name, rtype, rclass)]
+
+    def put(self, name, rtype, rclass, answer):
+        self._cache[(name, rtype, rclass)] = answer
+
+    def flush(self):
+        self._cache = {}
+
+
 class OutboundHandler:
     @staticmethod
     def random_outbound(outbound_list, weighted=False):
