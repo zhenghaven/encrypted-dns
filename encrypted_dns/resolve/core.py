@@ -1,5 +1,7 @@
 import random
 
+import encrypted_dns.outbound
+
 import dns.message
 import dns.flags
 
@@ -59,7 +61,9 @@ class WireMessageHandler:
                 'udp': WireMessageHandler._udp_resolve,
                 'tcp': WireMessageHandler._tcp_resolve,
                 'tls': WireMessageHandler._tcp_resolve,
-                'https': WireMessageHandler._https_resolve
+                'dot': WireMessageHandler._tcp_resolve,
+                'https': WireMessageHandler._https_resolve,
+                'doh': WireMessageHandler._https_resolve,
             }
 
             dns_message = dns.message.from_wire(wire_message)
@@ -88,16 +92,20 @@ class WireMessageHandler:
 
     @staticmethod
     def _udp_resolve(dns_message, outbound):
-        pass
+        udp = encrypted_dns.outbound.DatagramOutbound.from_dict(outbound)
+        return udp.query(dns_message)
 
     @staticmethod
     def _tcp_resolve(dns_message, outbound):
-        pass
+        tls = encrypted_dns.outbound.StreamOutbound.from_dict(outbound)
+        return tls.query(dns_message)
 
     @staticmethod
     def _https_resolve(dns_message, outbound):
-        pass
+        https = encrypted_dns.outbound.HTTPSOutbound.from_dict(outbound)
+        return https.query(dns_message)
 
     @staticmethod
     def _tls_resolve(dns_message, outbound):
-        pass
+        tls = encrypted_dns.outbound.TLSOutbound.from_dict(outbound)
+        return tls.query(dns_message)

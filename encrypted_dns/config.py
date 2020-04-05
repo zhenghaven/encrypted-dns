@@ -27,7 +27,7 @@ class Configuration:
             'outbound': [
                 {
                     'protocol': 'https',
-                    'address': 'cloudflare-dns.com',
+                    'domain': 'cloudflare-dns.com',
                     'ip': '1.0.0.1',
                     'port': 443,
                     'weight': 0,
@@ -37,7 +37,7 @@ class Configuration:
                 },
                 {
                     'protocol': 'tls',
-                    'address': 'dns.google',
+                    'domain': 'dns.google',
                     'ip': '8.8.4.4',
                     'port': 853,
                     'weight': 100

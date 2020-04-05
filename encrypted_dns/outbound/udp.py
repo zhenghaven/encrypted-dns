@@ -1,12 +1,9 @@
-from abc import ABC
-
-import dns.message
 import dns.query
 
 from encrypted_dns.outbound import BaseOutbound
 
 
-class DatagramOutbound(BaseOutbound, ABC):
+class DatagramOutbound(BaseOutbound):
     def __init__(self, ip, port, timeout):
         super().__init__()
         self.ip = ip
@@ -24,6 +21,4 @@ class DatagramOutbound(BaseOutbound, ABC):
         return cls(ip, port, timeout)
 
     def query(self, dns_message):
-        response = dns.query.udp(dns_message, self.ip, port=self.port, timeout=self.timeout)
-        return response
-
+        return dns.query.udp(dns_message, self.ip, port=self.port, timeout=self.timeout)
