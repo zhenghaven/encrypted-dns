@@ -2,32 +2,33 @@ import json
 import os
 
 
-class Configuration:
+class ConfigHandler:
 
     def __init__(self):
         self.DEFAULT_CONFIG = {
             'enable_log': False,
             'enable_cache': True,
+            'enable_ecs': '124.200.200.200',
 
-            'listen': [
+            'inbound': [
                 {
                     'protocol': 'udp',
-                    'address': '127.0.0.1',
+                    'host': '127.0.0.1',
                     'port': 53
                 },
                 {
                     'protocol': 'udp',
-                    'address': '127.0.0.1',
+                    'host': '127.0.0.1',
                     'port': 5301
                 }
             ],
 
-            'upstream_weight': True,
-            'upstream_timeout': 30,
-            'upstream_dns': [
+            'outbound_weight': True,
+            'outbound_timeout': 30,
+            'outbound': [
                 {
                     'protocol': 'https',
-                    'address': 'cloudflare-dns.com',
+                    'domain': 'cloudflare-dns.com',
                     'ip': '1.0.0.1',
                     'port': 443,
                     'weight': 0,
@@ -37,29 +38,26 @@ class Configuration:
                 },
                 {
                     'protocol': 'tls',
-                    'address': 'dns.google',
+                    'domain': 'dns.google',
                     'ip': '8.8.4.4',
                     'port': 853,
                     'weight': 100
                 },
                 {
                     'protocol': 'udp',
-                    'address': '9.9.9.9',
+                    'ip': '9.9.9.9',
                     'port': 53,
                     'weight': 0
                 },
                 {
                     'protocol': 'tcp',
-                    'address': '8.8.4.4',
+                    'ip': '8.8.4.4',
                     'port': 53,
                     'weight': 0
                 }
             ],
 
-            'bootstrap_dns_address': {
-                'address': '1.1.1.1',
-                'port': 53
-            },
+            'bootstrap_dns_ip': '1.1.1.1',
 
             'dns_bypass': [
                 "captive.apple.com",
@@ -93,6 +91,9 @@ class Configuration:
         self.home = os.path.expanduser("~")
         self.file_name = self.home.rstrip('/') + '/.config/encrypted_dns/config.json'
         self.load()
+
+    def check_format(self):
+        return self
 
     def get_config(self, key=None):
         if key is None:
