@@ -16,7 +16,7 @@ class HTTPSOutbound(BaseOutbound):
     @classmethod
     def from_dict(cls, outbound_dict):
         super()
-        if outbound_dict['protocol'] not in {'https', 'doh'}:
+        if outbound_dict['protocol'] != 'https' and outbound_dict['protocol'] != 'doh':
             raise Exception()
         if 'ip' in outbound_dict:
             address = outbound_dict['ip']
@@ -40,6 +40,6 @@ class HTTPSOutbound(BaseOutbound):
             # one_rr_per_rrset=False, ignore_trailing=False,
             # session=None, path='/dns-query', post=True,
             # bootstrap_address=None, verify=True
-            session.proxies = self.proxies
+            session.proxies = self._proxies
             return dns.query.https(dns_message, self._address, port=self._port,
-                                   timeout=self._timeout, session=_session)
+                                   timeout=self._timeout, session=session)

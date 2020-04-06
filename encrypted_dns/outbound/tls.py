@@ -13,7 +13,7 @@ class TLSOutbound(BaseOutbound):
     @classmethod
     def from_dict(cls, outbound_dict):
         super()
-        if outbound_dict['protocol'] not in {'tls', 'dot'}:
+        if outbound_dict['protocol'] != 'tls' and outbound_dict['protocol'] != 'dot':
             raise Exception()
         if 'ip' in outbound_dict:
             address = outbound_dict['ip']

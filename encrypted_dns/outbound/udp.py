@@ -13,8 +13,9 @@ class DatagramOutbound(BaseOutbound):
     @classmethod
     def from_dict(cls, outbound_dict):
         super()
-        if outbound_dict['protocol'] is not 'udp':
+        if outbound_dict['protocol'] != 'udp':
             raise Exception()
+
         ip = outbound_dict['ip']
         port = outbound_dict.get('port', 53)
         timeout = outbound_dict.get('timeout', 60)

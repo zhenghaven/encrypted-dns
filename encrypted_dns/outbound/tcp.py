@@ -13,7 +13,7 @@ class StreamOutbound(BaseOutbound):
     @classmethod
     def from_dict(cls, outbound_dict):
         super()
-        if outbound_dict['protocol'] is not 'tcp':
+        if outbound_dict['protocol'] != 'tcp':
             raise Exception()
         ip = outbound_dict['ip']
         port = outbound_dict.get('port', 53)
