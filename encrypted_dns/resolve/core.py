@@ -8,7 +8,7 @@ import dns.flags
 import dns.edns
 
 
-class Cache:
+class CacheHandler:
     def __init__(self):
         self._cache = {}
 
@@ -21,10 +21,10 @@ class Cache:
             # purge cache if time exceeds ttl
             if int(time.time()) - put_time >= ttl:
                 self._cache.pop((rrset.name, rrset.rdtype, rrset.rdclass))
-                return None
+                return None, None
             else:
                 return response_rrset, ttl
-        return None
+        return None, None
 
     def put(self, rrset):
         self._cache[(rrset.name, rrset.rdtype, rrset.rdclass)] = (rrset, rrset.ttl, int(time.time()))
@@ -42,17 +42,18 @@ class OutboundHandler:
         :param weighted: Whether to use weighted random selection.
         :return: Dictionary of outbound and type of outbound
         """
-        populations, weights = [], []
+        population, weights = [], []
         for outbound in outbound_list:
+            population.append(outbound)
             if weighted:
                 weights.append(outbound.get('weight', 0))
             else:
                 weights.append(0)
 
         if weighted:
-            result = random.choices(populations=populations, weights=weights, k=1)
+            result = random.choices(population=population, weights=weights, k=1)[0]
         else:
-            result = random.choice(populations)
+            result = random.choice(population)
         return result, result['protocol']
 
     @staticmethod
@@ -61,24 +62,19 @@ class OutboundHandler:
         Resolve ip address of HTTPS or TLS outbound with bootstrap dns address.
         :param outbound_address: domain name of HTTPS or TLS outbound
         :param bootstrap_dns_address: dns server for resolving 'outbound_address'
-        :return: ip address of HTTPS or TLS outbound
+        :return: RRSet Answer of HTTPS or TLS outbound
         """
         dns_query = dns.message.make_query(outbound_address, dns.rdatatype.A)
         response = dns.query.udp(dns_query, bootstrap_dns_address, port=53, timeout=0)
-        for answer in response.answer:
-            print(answer)
         return response.answer
 
 
 class WireMessageHandler:
-    def __init__(self):
-        pass
-
-    @staticmethod
-    def handle_response(response, cache):
-        for answer in response.answer:
-            cache.put(answer)
-        return response
+    def __init__(self, outbound_list, cache_object, enable_ecs, bootstrap_dns_ip):
+        self.cache = cache_object
+        self.outbound_list = outbound_list
+        self.ecs_ip_address = enable_ecs
+        self.bootstrap_dns_ip = bootstrap_dns_ip
 
     @staticmethod
     def edns_subnet_client(query_message, ip):
@@ -86,13 +82,15 @@ class WireMessageHandler:
         query_message.edns = dns.edns.ECSOption(ip, srclen=24, scopelen=0)
         return query_message
 
-    @staticmethod
-    def wire_resolve(wire_message, outbound_list, cache):
+    def handle_response(self, response):
+        for answer in response.answer:
+            self.cache.put(answer)
+        return response.to_wire()
+
+    def wire_resolve(self, wire_message):
         """
         Parse wire messages received by inbounds and forward them to corresponding outbounds.
-        :param cache: Cache object that stores cached DNS answers.
         :param wire_message: DNS query message received by inbound.
-        :param outbound_list: List of outbounds specified in config.json.
         :return: DNS response to the query.
         """
         try:
@@ -100,8 +98,8 @@ class WireMessageHandler:
             protocol_methods = {
                 'udp': WireMessageHandler._udp_resolve,
                 'tcp': WireMessageHandler._tcp_resolve,
-                'tls': WireMessageHandler._tcp_resolve,
-                'dot': WireMessageHandler._tcp_resolve,
+                'tls': WireMessageHandler._tls_resolve,
+                'dot': WireMessageHandler._tls_resolve,
                 'https': WireMessageHandler._https_resolve,
                 'doh': WireMessageHandler._https_resolve,
             }
@@ -115,16 +113,19 @@ class WireMessageHandler:
 
             # retrieve cached rrset from cache
             question_rrset = dns_message.question[0]
-            cached_response_rrset, ttl = cache.get(question_rrset)
+            cached_response_rrset, ttl = self.cache.get(question_rrset)
             if cached_response_rrset:
                 dns_response = dns.message.make_response(dns_message)
-                return dns_response.answer.append(cached_response_rrset)
+                dns_response.answer.append(cached_response_rrset)
+                return dns_response.to_wire()
 
             # list of outbounds in config.json
-            outbound, protocol = OutboundHandler.random_outbound(outbound_list, weighted=True)
+            outbound, protocol = OutboundHandler.random_outbound(self.outbound_list, weighted=True)
+            outbound['bootstrap_dns_ip'] = self.bootstrap_dns_ip
             dns_response = protocol_methods[protocol].__call__(dns_message, outbound)
+
             # process response and update cache
-            return WireMessageHandler.handle_response(dns_response, cache)
+            return self.handle_response(dns_response)
 
         except dns.message.ShortHeader:
             print('[Error]: The DNS packet passed to from_wire() is too short.')

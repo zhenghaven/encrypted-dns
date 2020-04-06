@@ -2,22 +2,23 @@ import json
 import os
 
 
-class Configuration:
+class ConfigHandler:
 
     def __init__(self):
         self.DEFAULT_CONFIG = {
             'enable_log': False,
             'enable_cache': True,
+            'enable_ecs': '124.200.200.200',
 
             'inbound': [
                 {
                     'protocol': 'udp',
-                    'address': '127.0.0.1',
+                    'host': '127.0.0.1',
                     'port': 53
                 },
                 {
                     'protocol': 'udp',
-                    'address': '127.0.0.1',
+                    'host': '127.0.0.1',
                     'port': 5301
                 }
             ],
@@ -56,10 +57,7 @@ class Configuration:
                 }
             ],
 
-            'bootstrap_dns_address': {
-                'address': '1.1.1.1',
-                'port': 53
-            },
+            'bootstrap_dns_ip': '1.1.1.1',
 
             'dns_bypass': [
                 "captive.apple.com",
@@ -93,6 +91,9 @@ class Configuration:
         self.home = os.path.expanduser("~")
         self.file_name = self.home.rstrip('/') + '/.config/encrypted_dns/config.json'
         self.load()
+
+    def check_format(self):
+        return self
 
     def get_config(self, key=None):
         if key is None:
