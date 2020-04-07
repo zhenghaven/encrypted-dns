@@ -78,6 +78,12 @@ class WireMessageHandler:
 
     @staticmethod
     def edns_subnet_client(query_message, ip):
+        """
+        Add edns subnet client option to query messages.
+        :param query_message: DNS query message for processing.
+        :param ip: IP Address to add as an option.
+        :return: Processed DNS query message.
+        """
         # srclen is 24 for ipv4, 56 for ipv6
         query_message.edns = dns.edns.ECSOption(ip, srclen=24, scopelen=0)
         return query_message
@@ -113,6 +119,7 @@ class WireMessageHandler:
 
             # retrieve cached rrset from cache
             question_rrset = dns_message.question[0]
+            print(question_rrset.name)
             cached_response_rrset, ttl = self.cache.get(question_rrset)
             if cached_response_rrset:
                 dns_response = dns.message.make_response(dns_message)
@@ -139,6 +146,10 @@ class WireMessageHandler:
             print('[Error]: A TSIG with an unknown key was received.')
         except dns.message.BadTSIG:
             print('[Error]: A TSIG record occurred somewhere other than the end of the additional data section.')
+        except dns.name.BadLabelType:
+            print('[Error]: The label type in DNS name wire format is unknown.')
+        except dns.exception.Timeout:
+            print('[Error]: The DNS operation timed out.')
 
     @staticmethod
     def _udp_resolve(dns_message, outbound):
@@ -147,8 +158,8 @@ class WireMessageHandler:
 
     @staticmethod
     def _tcp_resolve(dns_message, outbound):
-        tls = encrypted_dns.outbound.StreamOutbound.from_dict(outbound)
-        return tls.query(dns_message)
+        tcp = encrypted_dns.outbound.StreamOutbound.from_dict(outbound)
+        return tcp.query(dns_message)
 
     @staticmethod
     def _https_resolve(dns_message, outbound):
