@@ -35,9 +35,10 @@ class CacheHandler:
 
 class OutboundHandler:
     @staticmethod
-    def random_outbound(outbound_list, weighted=False):
+    def random_outbound(outbound_list, bootstrap_dns_ip, weighted=False):
         """
         Get a random outbound from the list of outbounds specified in config.json.
+        :param bootstrap_dns_ip: DNS server for resolving 'address'
         :param outbound_list: List of outbounds.
         :param weighted: Whether to use weighted random selection.
         :return: Dictionary of outbound and type of outbound
@@ -54,19 +55,25 @@ class OutboundHandler:
             result = random.choices(population=population, weights=weights, k=1)[0]
         else:
             result = random.choice(population)
+
+        if result['protocol'] in {'tls', 'https', 'dot', 'doh'} and ('ip' not in result or result['ip'] == ""):
+            result['ip'] = OutboundHandler._resolve_outbound_ip(result['address'], bootstrap_dns_ip)
         return result, result['protocol']
 
     @staticmethod
-    def _resolve_outbound_ip(outbound_address, bootstrap_dns_address):
+    def _resolve_outbound_ip(outbound_address, bootstrap_dns_ip):
         """
         Resolve ip address of HTTPS or TLS outbound with bootstrap dns address.
         :param outbound_address: domain name of HTTPS or TLS outbound
-        :param bootstrap_dns_address: dns server for resolving 'outbound_address'
+        :param bootstrap_dns_ip: DNS server for resolving 'outbound_address'
         :return: RRSet Answer of HTTPS or TLS outbound
         """
         dns_query = dns.message.make_query(outbound_address, dns.rdatatype.A)
-        response = dns.query.udp(dns_query, bootstrap_dns_address, port=53, timeout=0)
-        return response.answer
+        response = dns.query.udp(dns_query, bootstrap_dns_ip, port=53, timeout=0)
+        if len(response.answer) == 1:
+            return response.answer[0].items[0]
+        else:
+            return response.answer[-1].items[0]
 
 
 class WireMessageHandler:
@@ -84,8 +91,7 @@ class WireMessageHandler:
         :param ip: IP Address to add as an option.
         :return: Processed DNS query message.
         """
-        # srclen is 24 for ipv4, 56 for ipv6
-        query_message.edns = dns.edns.ECSOption(ip, srclen=24, scopelen=0)
+        query_message.edns = dns.edns.ECSOption(ip)
         return query_message
 
     def handle_response(self, response):
@@ -119,7 +125,6 @@ class WireMessageHandler:
 
             # retrieve cached rrset from cache
             question_rrset = dns_message.question[0]
-            print(question_rrset.name)
             cached_response_rrset, ttl = self.cache.get(question_rrset)
             if cached_response_rrset:
                 dns_response = dns.message.make_response(dns_message)
@@ -127,7 +132,8 @@ class WireMessageHandler:
                 return dns_response.to_wire()
 
             # list of outbounds in config.json
-            outbound, protocol = OutboundHandler.random_outbound(self.outbound_list, weighted=True)
+            outbound, protocol = OutboundHandler.random_outbound(self.outbound_list, self.bootstrap_dns_ip,
+                                                                 weighted=True)
             outbound['bootstrap_dns_ip'] = self.bootstrap_dns_ip
             dns_response = protocol_methods[protocol].__call__(dns_message, outbound)
 
@@ -135,21 +141,21 @@ class WireMessageHandler:
             return self.handle_response(dns_response)
 
         except dns.message.ShortHeader:
-            print('[Error]: The DNS packet passed to from_wire() is too short.')
+            print('[Error]: The DNS packet passed to from_wire() is too short')
         except dns.message.TrailingJunk:
-            print('[Error]:The DNS packet passed to from_wire() has extra junk at the end of it.')
+            print('[Error]:The DNS packet passed to from_wire() has extra junk at the end of it')
         except dns.message.UnknownHeaderField:
-            print('[Error]: The header field name was not recognized when converting from text into a message.')
+            print('[Error]: The header field name was not recognized when converting from text into a message')
         except dns.message.BadEDNS:
-            print('[Error]: An OPT record occurred somewhere other than the start of the additional data section.')
+            print('[Error]: An OPT record occurred somewhere other than the start of the additional data section')
         except dns.message.UnknownTSIGKey:
-            print('[Error]: A TSIG with an unknown key was received.')
+            print('[Error]: A TSIG with an unknown key was received')
         except dns.message.BadTSIG:
-            print('[Error]: A TSIG record occurred somewhere other than the end of the additional data section.')
+            print('[Error]: A TSIG record occurred somewhere other than the end of the additional data section')
         except dns.name.BadLabelType:
-            print('[Error]: The label type in DNS name wire format is unknown.')
+            print('[Error]: The label type in DNS name wire format is unknown')
         except dns.exception.Timeout:
-            print('[Error]: The DNS operation timed out.')
+            print('[Error]: The DNS operation timed out')
 
     @staticmethod
     def _udp_resolve(dns_message, outbound):

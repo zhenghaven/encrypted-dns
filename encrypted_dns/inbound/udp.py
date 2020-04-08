@@ -41,4 +41,5 @@ class DatagramHandler(socketserver.BaseRequestHandler):
     def _thread(self, wire_data):
         resolve_data = wire_message_handler.wire_resolve(wire_data)
         datagram_socket = self.request[1]
-        datagram_socket.sendto(resolve_data, self.client_address)
+        if resolve_data:
+            datagram_socket.sendto(resolve_data, self.client_address)
