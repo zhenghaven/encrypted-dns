@@ -6,85 +6,52 @@ class ConfigHandler:
 
     def __init__(self):
         self.DEFAULT_CONFIG = {
-            'enable_log': False,
-            'enable_cache': True,
-            'enable_ecs': '124.200.200.200',
+            'log': False,
+            'dns_cache': True,
+            'ecs_ip_address': '104.17.176.85',
 
-            'inbound': [
+            # 'force_safe_search': False,
+            # 'block_ads': True,
+            # 'hosts': {
+            #     'localhost': '127.0.0.1'
+            # },
+
+            'inbounds': [
+                '127.0.0.1:53',
+                '127.0.0.1:5301'
+            ],
+
+            'outbounds': [
                 {
-                    'protocol': 'udp',
-                    'host': '127.0.0.1',
-                    'port': 53
+                    'tag': 'bootstrap',
+                    'dns': ['1.0.0.1'],
+                    # 'domains': [
+                    #     "captive.apple.com",
+                    #     "connectivitycheck.gstatic.com",
+                    #     "detectportal.firefox.com",
+                    #     "msftconnecttest.com",
+                    #     "nmcheck.gnome.org",
+                    #     "pool.ntp.org",
+                    #     "time.apple.com",
+                    #     "time.asia.apple.com",
+                    #     "time.euro.apple.com",
+                    #     "time.nist.gov",
+                    #     "time.windows.com"
+                    # ]
                 },
                 {
-                    'protocol': 'udp',
-                    'host': '127.0.0.1',
-                    'port': 5301
+                    'tag': 'unencrypted',
+                    'dns': ['8.8.4.4', '9.9.9.9'],
+                    'concurrent': False,
+                    # 'domains': ['china']
+                },
+                {
+                    'tag': 'encrypted',
+                    'dns': ['https://cloudflare-dns.com', 'tls://dns.google'],
+                    'concurrent': False,
+                    # 'proxy': '127.0.0.1:1080'
                 }
-            ],
-
-            'outbound_weight': True,
-            'outbound_timeout': 30,
-            'outbound': [
-                {
-                    'protocol': 'https',
-                    'domain': 'cloudflare-dns.com',
-                    'ip': '1.0.0.1',
-                    'port': 443,
-                    'weight': 0,
-                    'enable_http_proxy': False,
-                    'proxy_host': 'localhost',
-                    'proxy_port': 8001
-                },
-                {
-                    'protocol': 'tls',
-                    'domain': 'dns.google',
-                    'ip': '8.8.4.4',
-                    'port': 853,
-                    'weight': 100
-                },
-                {
-                    'protocol': 'udp',
-                    'ip': '9.9.9.9',
-                    'port': 53,
-                    'weight': 0
-                },
-                {
-                    'protocol': 'tcp',
-                    'ip': '8.8.4.4',
-                    'port': 53,
-                    'weight': 0
-                }
-            ],
-
-            'bootstrap_dns_ip': '1.1.1.1',
-
-            'dns_bypass': [
-                "captive.apple.com",
-                "connectivitycheck.gstatic.com",
-                "detectportal.firefox.com",
-                "msftconnecttest.com",
-                "nmcheck.gnome.org",
-
-                "pool.ntp.org",
-                "time.apple.com",
-                "time.asia.apple.com",
-                "time.euro.apple.com",
-                "time.nist.gov",
-                "time.windows.com"
-            ],
-            'dns_bypass_china': False,
-
-            'client_blacklist': [
-                '1.0.0.1',
-                '127.100.100.100'
-            ],
-
-            'force_safe_search': False,
-            'block_ads': True,
-            'hosts': {
-                'localhost': '127.0.0.1'
-            }
+            ]
         }
 
         self.config = {}

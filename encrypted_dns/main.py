@@ -1,5 +1,6 @@
-import encrypted_dns
 import threading
+
+import encrypted_dns
 
 
 def _udp_inbound(host, port, core_object):
@@ -17,25 +18,23 @@ def start():
     }
     inbound_thread_pool = []
     config = encrypted_dns.ConfigHandler().check_format()
-    inbound_list = config.get_config('inbound')
 
-    # check whether to use dns cache
-    if config.get_config('enable_cache'):
+    if config.get_config('dns_cache'):
         cache_object = encrypted_dns.resolve.CacheHandler()
     else:
         cache_object = None
 
     wire_message_handler_object = encrypted_dns.resolve.WireMessageHandler(
-        config.get_config('outbound'),
+        config.get_config('outbounds'),
         cache_object,
-        config.get_config('enable_ecs'),
-        config.get_config('bootstrap_dns_ip')
+        config.get_config('ecs_ip_address')
     )
 
-    for inbound in inbound_list:
+    for inbound in config.get_config('inbounds'):
+        protocol, host, port = encrypted_dns.utils.parse_dns_address(inbound)
         inbound_object = threading.Thread(
-            target=protocol_methods[inbound['protocol']],
-            args=(inbound['host'], inbound['port'], wire_message_handler_object),
+            target=protocol_methods[protocol],
+            args=(host, port, wire_message_handler_object),
             daemon=True
         ).start()
         inbound_thread_pool.append(inbound_object)

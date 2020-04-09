@@ -1,11 +1,11 @@
 import random
 import time
 
-import encrypted_dns.outbound
-
-import dns.message
-import dns.flags
 import dns.edns
+import dns.flags
+import dns.message
+
+import encrypted_dns.outbound
 
 
 class CacheHandler:
@@ -35,33 +35,25 @@ class CacheHandler:
 
 class OutboundHandler:
     @staticmethod
-    def random_outbound(outbound_list, bootstrap_dns_ip, weighted=False):
-        """
-        Get a random outbound from the list of outbounds specified in config.json.
-        :param bootstrap_dns_ip: DNS server for resolving 'address'
-        :param outbound_list: List of outbounds.
-        :param weighted: Whether to use weighted random selection.
-        :return: Dictionary of outbound and type of outbound
-        """
-        population, weights = [], []
-        for outbound in outbound_list:
-            population.append(outbound)
-            if weighted:
-                weights.append(outbound.get('weight', 0))
-            else:
-                weights.append(0)
-
-        if weighted:
-            result = random.choices(population=population, weights=weights, k=1)[0]
-        else:
-            result = random.choice(population)
-
-        if result['protocol'] in {'tls', 'https', 'dot', 'doh'} and ('ip' not in result or result['ip'] == ""):
-            result['ip'] = OutboundHandler._resolve_outbound_ip(result['address'], bootstrap_dns_ip)
-        return result, result['protocol']
+    def get_group(query_name, outbounds, rules=None):
+        return outbounds['encrypted'], outbounds['encrypted']['concurrent']
 
     @staticmethod
-    def _resolve_outbound_ip(outbound_address, bootstrap_dns_ip):
+    def random_outbound(outbounds):
+        """
+        Get a random outbound from the list of outbounds specified in config.json.
+        :param outbounds: List of outbounds.
+        :return: Dictionary of outbound and type of outbound
+        """
+        population = []
+        for outbound in outbounds:
+            population.append(outbound)
+
+        result = random.choice(population)
+        return encrypted_dns.utils.parse_dns_address(result)
+
+    @staticmethod
+    def resolve_outbound_ip(outbound_address, bootstrap_dns_ip):
         """
         Resolve ip address of HTTPS or TLS outbound with bootstrap dns address.
         :param outbound_address: domain name of HTTPS or TLS outbound
@@ -77,11 +69,14 @@ class OutboundHandler:
 
 
 class WireMessageHandler:
-    def __init__(self, outbound_list, cache_object, enable_ecs, bootstrap_dns_ip):
+    def __init__(self, outbounds, cache_object, ecs_ip_address):
         self.cache = cache_object
-        self.outbound_list = outbound_list
-        self.ecs_ip_address = enable_ecs
-        self.bootstrap_dns_ip = bootstrap_dns_ip
+        self.outbounds = outbounds
+        self.ecs_ip_address = ecs_ip_address
+        self.bootstrap_dns_ip = '1.0.0.1'
+        for group in outbounds:
+            if group['tag'] == 'bootstrap':
+                self.bootstrap_dns_ip = group['dns']
 
     @staticmethod
     def edns_subnet_client(query_message, ip):
@@ -132,10 +127,29 @@ class WireMessageHandler:
                 return dns_response.to_wire()
 
             # list of outbounds in config.json
-            outbound, protocol = OutboundHandler.random_outbound(self.outbound_list, self.bootstrap_dns_ip,
-                                                                 weighted=True)
-            outbound['bootstrap_dns_ip'] = self.bootstrap_dns_ip
-            dns_response = protocol_methods[protocol].__call__(dns_message, outbound)
+            outbound_group, concurrent = OutboundHandler.get_group(question_rrset.name, self.outbounds)
+            if concurrent:
+                dns_response = None
+            else:
+                protocol, dns_address, port = OutboundHandler.random_outbound(outbound_group)
+                is_valid_ip_address = encrypted_dns.utils.is_valid_ipv4_address(dns_address)
+
+                if protocol in ('https', 'tls', 'doh', 'dot') and not is_valid_ip_address:
+                    ip_address = OutboundHandler.resolve_outbound_ip(dns_address, self.bootstrap_dns_ip)
+                    outbound = {
+                        'protocol': protocol,
+                        'domain': dns_address,
+                        'ip': ip_address,
+                        'port': port
+                    }
+                else:
+                    outbound = {
+                        'protocol': protocol,
+                        'ip': dns_address,
+                        'port': port
+                    }
+
+                dns_response = protocol_methods[protocol].__call__(dns_message, outbound)
 
             # process response and update cache
             return self.handle_response(dns_response)
