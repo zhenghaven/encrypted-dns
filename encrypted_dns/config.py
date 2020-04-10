@@ -10,15 +10,19 @@ class ConfigHandler:
             'dns_cache': True,
             'ecs_ip_address': '104.17.176.85',
 
-            # 'force_safe_search': False,
-            # 'block_ads': True,
-            # 'hosts': {
-            #     'localhost': '127.0.0.1'
-            # },
+            'rules': {
+                'force_safe_search': False,
+                # 'block_ads': True,
+                'hosts': {
+                    'localhost': '127.0.0.1',
+                    'cloudflare-dns.com': '1.0.0.1',
+                    'dns.google': '8.8.4.4'
+                }
+            },
 
             'inbounds': [
-                '127.0.0.1:53',
-                '127.0.0.1:5301'
+                '0.0.0.0:53',
+                '0.0.0.0:5301'
             ],
 
             'outbounds': [
@@ -41,7 +45,7 @@ class ConfigHandler:
                 },
                 {
                     'tag': 'unencrypted',
-                    'dns': ['8.8.4.4', '9.9.9.9'],
+                    'dns': ['8.8.4.4', 'tcp://1.0.0.1'],
                     'concurrent': False,
                     # 'domains': ['china']
                 },

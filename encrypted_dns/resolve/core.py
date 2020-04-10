@@ -4,6 +4,7 @@ import time
 import dns.edns
 import dns.flags
 import dns.message
+import dns.rdatatype
 
 import encrypted_dns.outbound
 
@@ -36,7 +37,9 @@ class CacheHandler:
 class OutboundHandler:
     @staticmethod
     def get_group(query_name, outbounds, rules=None):
-        return outbounds['encrypted'], outbounds['encrypted']['concurrent']
+        for group in outbounds:
+            if group['tag'] == 'encrypted':
+                return group, group['concurrent']
 
     @staticmethod
     def random_outbound(outbounds):
@@ -46,37 +49,44 @@ class OutboundHandler:
         :return: Dictionary of outbound and type of outbound
         """
         population = []
-        for outbound in outbounds:
+        for outbound in outbounds['dns']:
             population.append(outbound)
 
         result = random.choice(population)
         return encrypted_dns.utils.parse_dns_address(result)
 
     @staticmethod
-    def resolve_outbound_ip(outbound_address, bootstrap_dns_ip):
+    def resolve_outbound_ip(outbound_address, bootstrap_dns_ip, hosts):
         """
         Resolve ip address of HTTPS or TLS outbound with bootstrap dns address.
+        :param hosts: hosts dictionary to override dns response
         :param outbound_address: domain name of HTTPS or TLS outbound
         :param bootstrap_dns_ip: DNS server for resolving 'outbound_address'
         :return: RRSet Answer of HTTPS or TLS outbound
         """
+        # if outbound_address in hosts:
+        #     return hosts[outbound_address]
+
         dns_query = dns.message.make_query(outbound_address, dns.rdatatype.A)
-        response = dns.query.udp(dns_query, bootstrap_dns_ip, port=53, timeout=0)
+        response = dns.query.udp(dns_query, bootstrap_dns_ip)
+        print(type(response.answer[0].items[0]))
         if len(response.answer) == 1:
-            return response.answer[0].items[0]
+            return response.answer[0].items[0].to_text()
         else:
-            return response.answer[-1].items[0]
+            return response.answer[-1].items[0].to_text()
 
 
 class WireMessageHandler:
-    def __init__(self, outbounds, cache_object, ecs_ip_address):
+    def __init__(self, outbounds, cache_object, ecs_ip_address, hosts):
         self.cache = cache_object
         self.outbounds = outbounds
         self.ecs_ip_address = ecs_ip_address
+        self.hosts = hosts
+
         self.bootstrap_dns_ip = '1.0.0.1'
         for group in outbounds:
             if group['tag'] == 'bootstrap':
-                self.bootstrap_dns_ip = group['dns']
+                self.bootstrap_dns_ip = group['dns'][0]
 
     @staticmethod
     def edns_subnet_client(query_message, ip):
@@ -120,14 +130,31 @@ class WireMessageHandler:
 
             # retrieve cached rrset from cache
             question_rrset = dns_message.question[0]
+            question_name = question_rrset.name.to_text().rstrip('.')
             cached_response_rrset, ttl = self.cache.get(question_rrset)
             if cached_response_rrset:
                 dns_response = dns.message.make_response(dns_message)
                 dns_response.answer.append(cached_response_rrset)
                 return dns_response.to_wire()
 
+            # check hosts
+            if question_name in self.hosts:
+                hosts_record = self.hosts[question_name]
+                dns_response = dns.message.make_response(dns_message)
+                if encrypted_dns.utils.is_valid_ipv4_address(hosts_record):
+                    hosts_rrset = dns.rrset.from_text(question_rrset.name, 300, dns.rdataclass.IN,
+                                                      dns.rdatatype.A, hosts_record)
+                else:
+                    if not hosts_record.endswith('.'):
+                        hosts_record += '.'
+
+                    hosts_rrset = dns.rrset.from_text(question_rrset.name, 300, dns.rdataclass.IN,
+                                                      dns.rdatatype.CNAME, hosts_record)
+                dns_response.answer.append(hosts_rrset)
+                return dns_response.to_wire()
+
             # list of outbounds in config.json
-            outbound_group, concurrent = OutboundHandler.get_group(question_rrset.name, self.outbounds)
+            outbound_group, concurrent = OutboundHandler.get_group(question_name, self.outbounds)
             if concurrent:
                 dns_response = None
             else:
@@ -135,7 +162,7 @@ class WireMessageHandler:
                 is_valid_ip_address = encrypted_dns.utils.is_valid_ipv4_address(dns_address)
 
                 if protocol in ('https', 'tls', 'doh', 'dot') and not is_valid_ip_address:
-                    ip_address = OutboundHandler.resolve_outbound_ip(dns_address, self.bootstrap_dns_ip)
+                    ip_address = OutboundHandler.resolve_outbound_ip(dns_address, self.bootstrap_dns_ip, self.hosts)
                     outbound = {
                         'protocol': protocol,
                         'domain': dns_address,
