@@ -43,3 +43,4 @@ class DatagramHandler(socketserver.BaseRequestHandler):
         datagram_socket = self.request[1]
         if resolve_data:
             datagram_socket.sendto(resolve_data, self.client_address)
+        return None

@@ -1,5 +1,6 @@
-import ssl
 import socket
+import ssl
+
 import dns.message
 
 from encrypted_dns.outbound import BaseOutbound
@@ -21,14 +22,13 @@ class TLSOutbound(BaseOutbound):
 
         ip = outbound_dict['ip']
         domain = outbound_dict['domain']
-        port = outbound_dict.get('port', 443)
+        port = outbound_dict.get('port', 853)
         timeout = outbound_dict.get('timeout', 60)
         return cls(domain, port, timeout, ip)
 
     def query(self, dns_message):
         try:
             query_message = dns_message.to_wire()
-
             context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
             context.verify_mode = ssl.CERT_REQUIRED
             context.check_hostname = True

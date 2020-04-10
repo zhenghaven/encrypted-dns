@@ -1,6 +1,7 @@
 import base64
 import http.client
 import socket
+import ssl
 
 import dns.message
 
@@ -46,7 +47,9 @@ class HTTPSOutbound(BaseOutbound):
         query_headers = {'Host': self._domain}
 
         try:
-            https_connection = http.client.HTTPSConnection(self._ip, self._port, timeout=self._timeout)
+            https_connection = http.client.HTTPSConnection(self._ip, self._port,
+                                                           timeout=self._timeout,
+                                                           context=ssl._create_unverified_context())
             https_connection.request('GET', query_url, headers=query_headers)
             response_object = https_connection.getresponse()
             return dns.message.from_wire(response_object.read())
