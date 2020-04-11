@@ -36,10 +36,24 @@ class CacheHandler:
 
 class OutboundHandler:
     @staticmethod
-    def get_group(query_name, outbounds, rules=None):
-        for group in outbounds:
-            if group['tag'] == 'encrypted':
-                return group, group['concurrent']
+    def get_group(query_name, domain_group, tag_group, rules=None):
+        tag = 'bootstrap'
+        priority = 0
+        for i in domain_group.keys():
+            # from lowest priority to highest
+            if i == 'all' and priority < 1:
+                tag = domain_group[i]
+                priority = 0
+            elif i.startswith('include:') and i[9:] in query_name and priority < 2:
+                tag = domain_group[i]
+                priority = 1
+            elif i.startswith('sub:') and query_name.endswith(i[5:]) and priority < 3:
+                tag = domain_group[i]
+                priority = 2
+            elif query_name == i:
+                tag = domain_group[i]
+                priority = 3
+        return tag_group[tag], tag_group[tag].get('concurrent', False)
 
     @staticmethod
     def random_outbound(outbounds):
@@ -69,7 +83,6 @@ class OutboundHandler:
 
         dns_query = dns.message.make_query(outbound_address, dns.rdatatype.A)
         response = dns.query.udp(dns_query, bootstrap_dns_ip)
-        print(type(response.answer[0].items[0]))
         if len(response.answer) == 1:
             return response.answer[0].items[0].to_text()
         else:
@@ -79,14 +92,15 @@ class OutboundHandler:
 class WireMessageHandler:
     def __init__(self, outbounds, cache_object, ecs_ip_address, hosts):
         self.cache = cache_object
-        self.outbounds = outbounds
         self.ecs_ip_address = ecs_ip_address
         self.hosts = hosts
 
-        self.bootstrap_dns_ip = '1.0.0.1'
-        for group in outbounds:
-            if group['tag'] == 'bootstrap':
-                self.bootstrap_dns_ip = group['dns'][0]
+        self.tag_group = {}  # tag to group dict
+        self.domain_group = {}  # domain to tag
+        for dns_group in outbounds:
+            self.tag_group[dns_group['tag']] = dns_group
+            for domain in dns_group.get('domains', {}):
+                self.domain_group[domain] = dns_group['tag']
 
     @staticmethod
     def edns_subnet_client(query_message, ip):
@@ -96,8 +110,8 @@ class WireMessageHandler:
         :param ip: IP Address to add as an option.
         :return: Processed DNS query message.
         """
-        query_message.edns = dns.edns.ECSOption(ip)
-        return query_message
+        if ip is not '' and ip is not None:
+            query_message.use_edns(0, 0, options=[dns.edns.ECSOption(ip)])
 
     def handle_response(self, response):
         for answer in response.answer:
@@ -153,8 +167,11 @@ class WireMessageHandler:
                 dns_response.answer.append(hosts_rrset)
                 return dns_response.to_wire()
 
+            # add ecs to query message
+            self.edns_subnet_client(dns_message, self.ecs_ip_address)
+
             # list of outbounds in config.json
-            outbound_group, concurrent = OutboundHandler.get_group(question_name, self.outbounds)
+            outbound_group, concurrent = OutboundHandler.get_group(question_name, self.domain_group, self.tag_group)
             if concurrent:
                 dns_response = None
             else:
@@ -162,7 +179,12 @@ class WireMessageHandler:
                 is_valid_ip_address = encrypted_dns.utils.is_valid_ipv4_address(dns_address)
 
                 if protocol in ('https', 'tls', 'doh', 'dot') and not is_valid_ip_address:
-                    ip_address = OutboundHandler.resolve_outbound_ip(dns_address, self.bootstrap_dns_ip, self.hosts)
+                    if 'bootstrap' in self.tag_group:
+                        bootstrap_dns_ip = self.tag_group['bootstrap']['dns'][0]
+                    else:
+                        bootstrap_dns_ip = '1.0.0.1'
+
+                    ip_address = OutboundHandler.resolve_outbound_ip(dns_address, bootstrap_dns_ip, self.hosts)
                     outbound = {
                         'protocol': protocol,
                         'domain': dns_address,

@@ -29,31 +29,31 @@ class ConfigHandler:
                 {
                     'tag': 'bootstrap',
                     'dns': ['1.0.0.1'],
-                    # 'domains': [
-                    #     "captive.apple.com",
-                    #     "connectivitycheck.gstatic.com",
-                    #     "detectportal.firefox.com",
-                    #     "msftconnecttest.com",
-                    #     "nmcheck.gnome.org",
-                    #     "pool.ntp.org",
-                    #     "time.apple.com",
-                    #     "time.asia.apple.com",
-                    #     "time.euro.apple.com",
-                    #     "time.nist.gov",
-                    #     "time.windows.com"
-                    # ]
+                    'domains': [
+                        "captive.apple.com",
+                        "connectivitycheck.gstatic.com",
+                        "detectportal.firefox.com",
+                        "msftconnecttest.com",
+                        "nmcheck.gnome.org",
+                        "pool.ntp.org",
+                        "time.apple.com",
+                        "time.asia.apple.com",
+                        "time.euro.apple.com",
+                        "time.nist.gov",
+                        "time.windows.com"
+                    ]
                 },
                 {
                     'tag': 'unencrypted',
-                    'dns': ['8.8.4.4', 'tcp://1.0.0.1'],
+                    'dns': ['1.0.0.1', 'tcp://8.8.4.4'],
                     'concurrent': False,
-                    # 'domains': ['china']
+                    'domains': ['sub:youtube.com', 'include:netflix.com']
                 },
                 {
                     'tag': 'encrypted',
                     'dns': ['https://cloudflare-dns.com', 'tls://dns.google'],
                     'concurrent': False,
-                    # 'proxy': '127.0.0.1:1080'
+                    'domains': ['all']
                 }
             ]
         }
