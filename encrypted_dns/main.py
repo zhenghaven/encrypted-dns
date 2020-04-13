@@ -49,7 +49,8 @@ def start():
         config.get_config('outbounds'),
         cache_object,
         config.get_config('ecs_ip_address'),
-        hosts
+        hosts,
+        config.get_config('dnssec')
     )
 
     for inbound in config.get_config('inbounds'):

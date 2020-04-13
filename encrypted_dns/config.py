@@ -9,6 +9,7 @@ class ConfigHandler:
             'log': False,
             'dns_cache': True,
             'ecs_ip_address': '104.17.176.85',
+            'dnssec': False,
 
             'rules': {
                 'force_safe_search': False,
