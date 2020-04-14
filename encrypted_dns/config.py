@@ -8,8 +8,17 @@ class ConfigHandler:
         self.DEFAULT_CONFIG = {
             'log': False,
             'dns_cache': True,
-            'ecs_ip_address': '104.17.176.85',
+            'ecs_ip_address': '1.2.3.4',
             'dnssec': False,
+
+            'firewall': {
+                'refuse_ANY': True,
+                'AAAA_disabled': False,
+                'rate_limit': 30,
+                # 'client_blacklist': {
+                #     '1.2.3.4'
+                # }
+            },
 
             'rules': {
                 'force_safe_search': False,

@@ -90,11 +90,13 @@ class OutboundHandler:
 
 
 class WireMessageHandler:
-    def __init__(self, outbounds, cache_object, ecs_ip_address, hosts, dnssec):
+    def __init__(self, outbounds, cache_object, ecs_ip_address, hosts, dnssec, firewall):
         self.cache = cache_object
         self.ecs_ip_address = ecs_ip_address
         self.hosts = hosts
         self.dnssec = dnssec
+        self.firewall = firewall
+        self.rate_per_second = [0, int(time.time())]
 
         # create a dictionary that map protocol of outbound to the method for resolve
         self.protocol_methods = {
@@ -142,6 +144,25 @@ class WireMessageHandler:
             self.cache.put(answer)
         return response.to_wire()
 
+    def firewall_clearance(self, dns_message):
+        if self.firewall['refuse_ANY']:
+            for q in dns_message.question:
+                if q.rdtype == dns.rdatatype.ANY:
+                    return False
+
+        if self.firewall['AAAA_disabled']:
+            for q in dns_message.question:
+                if q.rdtype == dns.rdatatype.AAAA:
+                    return False
+
+        if self.firewall['rate_limit'] > -1:
+            self.rate_per_second[0] += 1
+            if int(time.time()) - self.rate_per_second[1] >= 1:
+                self.rate_per_second = [0, int(time.time())]
+            if self.firewall['rate_limit'] <= self.rate_per_second[0]:
+                return False
+        return True
+
     def wire_resolve(self, wire_message):
         """
         Parse wire messages received by inbounds and forward them to corresponding outbounds.
@@ -151,6 +172,10 @@ class WireMessageHandler:
         try:
             dns_message = dns.message.from_wire(wire_message)
             message_flags = dns.flags.to_text(dns_message.flags)
+
+            # check firewall rules
+            if not self.firewall_clearance(dns_message):
+                return None
 
             # raise an exception since 'wire_resolve' method should only process dns queries
             if 'QR' in message_flags:

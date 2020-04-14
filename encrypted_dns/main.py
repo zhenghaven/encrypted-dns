@@ -50,7 +50,8 @@ def start():
         cache_object,
         config.get_config('ecs_ip_address'),
         hosts,
-        config.get_config('dnssec')
+        config.get_config('dnssec'),
+        config.get_config('firewall')
     )
 
     for inbound in config.get_config('inbounds'):
