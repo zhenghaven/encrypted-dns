@@ -15,9 +15,9 @@ class ConfigHandler:
                 'refuse_ANY': True,
                 'AAAA_disabled': False,
                 'rate_limit': 30,
-                # 'client_blacklist': {
-                #     '1.2.3.4'
-                # }
+                'client_blacklist': [
+                    '1.2.3.4'
+                ]
             },
 
             'rules': {
@@ -32,7 +32,7 @@ class ConfigHandler:
 
             'inbounds': [
                 '0.0.0.0:53',
-                '0.0.0.0:5301'
+                'tcp://0.0.0.0:5301'
             ],
 
             'outbounds': [

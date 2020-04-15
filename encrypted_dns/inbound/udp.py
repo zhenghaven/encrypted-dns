@@ -1,5 +1,4 @@
 import socketserver
-import threading
 
 wire_message_handler = None
 
@@ -19,15 +18,13 @@ class DatagramInbound:
         """
         global wire_message_handler
         wire_message_handler = wire_message_handler_object
-
-        datagram_inbound = socketserver.UDPServer((host, port), DatagramHandler)
+        datagram_inbound = socketserver.ThreadingUDPServer((host, port), DatagramHandler)
         DatagramInbound.setup(host, port)
         datagram_inbound.serve_forever()
         return datagram_inbound
 
 
 class DatagramHandler(socketserver.BaseRequestHandler):
-
     def handle(self):
         """
         Forward received DNS queries to 'encrypted_dns.resolve.core'
@@ -36,11 +33,10 @@ class DatagramHandler(socketserver.BaseRequestHandler):
         """
         global wire_message_handler
         wire_data = self.request[0].strip()
-        threading.Thread(target=self._thread, args=(wire_data,), daemon=True).start()
-
-    def _thread(self, wire_data):
-        resolve_data = wire_message_handler.wire_resolve(wire_data)
-        datagram_socket = self.request[1]
-        if resolve_data:
-            datagram_socket.sendto(resolve_data, self.client_address)
+        # check firewall rules
+        if wire_message_handler.firewall_clearance(wire_data, self.client_address[0]):
+            resolve_data = wire_message_handler.wire_resolve(wire_data)
+            datagram_socket = self.request[1]
+            if resolve_data:
+                datagram_socket.sendto(resolve_data, self.client_address)
         return None

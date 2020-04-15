@@ -8,7 +8,7 @@ def _udp_inbound(host, port, core_object):
 
 
 def _tcp_inbound(host, port, core_object):
-    pass
+    return encrypted_dns.inbound.StreamInbound.serve(host, port, core_object)
 
 
 def start():
