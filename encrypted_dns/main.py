@@ -18,7 +18,7 @@ def start():
     }
 
     safe_search = {
-        'www.google.com': 'forcesafesearch.google.com',
+        'include:google.': 'forcesafesearch.google.com',
         'www.bing.com': 'strict.bing.com',
         'www.duckduckgo.com': 'safe.duckduckgo.com',
         'www.youtube.com': 'restrictmoderate.youtube.com',

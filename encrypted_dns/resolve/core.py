@@ -39,22 +39,7 @@ class CacheHandler:
 class OutboundHandler:
     @staticmethod
     def get_group(query_name, domain_group, tag_group, rules=None):
-        tag = 'bootstrap'
-        priority = 0
-        for i in domain_group.keys():
-            # from lowest priority to highest
-            if i == 'all' and priority < 1:
-                tag = domain_group[i]
-                priority = 0
-            elif i.startswith('include:') and i[9:] in query_name and priority < 2:
-                tag = domain_group[i]
-                priority = 1
-            elif i.startswith('sub:') and query_name.endswith(i[5:]) and priority < 3:
-                tag = domain_group[i]
-                priority = 2
-            elif query_name == i:
-                tag = domain_group[i]
-                priority = 3
+        tag = encrypted_dns.utils.parse_domain_rules(domain_group, query_name, default='bootstrap')
         return tag_group[tag], tag_group[tag].get('concurrent', False)
 
     @staticmethod
@@ -191,8 +176,8 @@ class WireMessageHandler:
                 return dns_response.to_wire()
 
             # check hosts
-            if question_name in self.hosts:
-                hosts_record = self.hosts[question_name]
+            hosts_record = encrypted_dns.utils.parse_domain_rules(self.hosts, question_name)
+            if hosts_record:
                 dns_response = dns.message.make_response(dns_message)
                 if encrypted_dns.utils.is_valid_ipv4_address(hosts_record):
                     hosts_rrset = dns.rrset.from_text(question_rrset.name, 300, dns.rdataclass.IN,

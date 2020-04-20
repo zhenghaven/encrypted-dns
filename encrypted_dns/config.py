@@ -22,7 +22,6 @@ class ConfigHandler:
 
             'rules': {
                 'force_safe_search': False,
-                # 'block_ads': True,
                 'hosts': {
                     'localhost': '127.0.0.1',
                     'cloudflare-dns.com': '1.0.0.1',
