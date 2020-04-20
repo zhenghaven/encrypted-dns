@@ -32,8 +32,8 @@ def start():
     config = encrypted_dns.ConfigHandler().check_format()
 
     # create cache object
-    if config.get_config('dns_cache'):
-        cache_object = encrypted_dns.resolve.CacheHandler()
+    if config.get_config('dns_cache')['enable']:
+        cache_object = encrypted_dns.resolve.CacheHandler(config.get_config('dns_cache')['override_ttl'])
     else:
         cache_object = None
 

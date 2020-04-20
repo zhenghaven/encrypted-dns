@@ -12,8 +12,9 @@ import encrypted_dns.outbound
 
 
 class CacheHandler:
-    def __init__(self):
+    def __init__(self, override_ttl):
         self._cache = {}
+        self._override_ttl = override_ttl
 
     def get_cache_dict(self):
         return self._cache
@@ -30,7 +31,10 @@ class CacheHandler:
         return None, None
 
     def put(self, rrset):
-        self._cache[(rrset.name, rrset.rdtype, rrset.rdclass)] = (rrset, rrset.ttl, int(time.time()))
+        if self._override_ttl == -1:
+            self._cache[(rrset.name, rrset.rdtype, rrset.rdclass)] = (rrset, rrset.ttl, int(time.time()))
+        else:
+            self._cache[(rrset.name, rrset.rdtype, rrset.rdclass)] = (rrset, self._override_ttl, int(time.time()))
 
     def flush(self):
         self._cache = {}

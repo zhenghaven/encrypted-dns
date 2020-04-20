@@ -7,9 +7,13 @@ class ConfigHandler:
     def __init__(self):
         self.DEFAULT_CONFIG = {
             'log': False,
-            'dns_cache': True,
             'ecs_ip_address': '1.2.3.4',
             'dnssec': False,
+
+            'dns_cache': {
+                'enable': True,
+                'override_ttl': 3600
+            },
 
             'firewall': {
                 'refuse_ANY': True,
