@@ -80,7 +80,7 @@ class WireMessageHandler:
         :param ip: IP Address to add as an option.
         :return: Processed DNS query message.
         """
-        if ip is not '' and ip is not None:
+        if ip != '' and ip is not None:
             query_message.use_edns(0, 0, options=[dns.edns.ECSOption(ip)])
 
     def validate_dnssec(self, question_name, outbound, protocol):

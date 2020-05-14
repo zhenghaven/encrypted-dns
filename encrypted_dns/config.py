@@ -5,6 +5,7 @@ import os
 class ConfigHandler:
     def __init__(self):
         self.DEFAULT_CONFIG = {
+            'version': '1.2.0',
             'ecs_ip_address': '128.97.0.0',
             'dnssec': False,
 
@@ -100,12 +101,20 @@ class ConfigHandler:
             self.config = self.get_default_config()
             self.save()
             print('Generated default config file:', self.file_name)
-            print('Please edit config file and restart Encrypted-DNS Resolver')
+            print('Please edit config file and restart Encrypted-DNS')
             exit()
         else:
             config_file = open(self.file_name)
             self.config = json.loads(config_file.read())
-            print('Load config file:', self.file_name)
+            if self.config.get('version'):
+                print('Load config file:', self.file_name)
+            else:
+                print('This config file is deprecated')
+                print('Generated default config file:', self.file_name)
+                print('Please edit config file and restart Encrypted-DNS')
+                self.config = self.get_default_config()
+                self.save()
+                exit()
 
     def save(self):
         if not os.path.exists(self.home.rstrip('/') + '/.config/'):
