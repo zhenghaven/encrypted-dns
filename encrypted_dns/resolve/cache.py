@@ -1,3 +1,6 @@
+import time
+
+
 class CacheHandler:
     def __init__(self, override_ttl):
         self._cache = {}

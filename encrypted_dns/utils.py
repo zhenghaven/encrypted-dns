@@ -21,30 +21,32 @@ def parse_domain_rules(rules, name, default=None):
 
 
 def parse_dns_address(dns_address):
-    port_dict = {
-        'doh': 443,
-        'https': 443,
-        'tls': 853,
-        'dot': 853,
-        'tcp': 53,
-        'udp': 53
-    }
+    try:
+        port_dict = {
+            'doh': 443,
+            'https': 443,
+            'tls': 853,
+            'dot': 853,
+            'tcp': 53,
+            'udp': 53
+        }
 
-    if '://' not in dns_address:
-        protocol = 'udp'
-    else:
-        dns_address = dns_address.split('://')
-        protocol = dns_address[0]
-        dns_address = dns_address[1]
+        if '://' not in dns_address:
+            protocol = 'udp'
+        else:
+            dns_address = dns_address.split('://')
+            protocol = dns_address[0]
+            dns_address = dns_address[1]
 
-    if ':' not in dns_address:
-        port = port_dict[protocol]
-    else:
-        dns_address = dns_address.split(':')
-        port = int(dns_address[1])
-        dns_address = dns_address[0]
-
-    return protocol, dns_address, port
+        if ':' not in dns_address:
+            port = port_dict[protocol]
+        else:
+            dns_address = dns_address.split(':')
+            port = int(dns_address[1])
+            dns_address = dns_address[0].rstrip('/')
+        return protocol, dns_address, port
+    except Exception as exc:
+        print("[Error]", exc)
 
 
 def is_valid_ipv4_address(address):

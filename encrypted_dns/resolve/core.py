@@ -30,20 +30,19 @@ class OutboundHandler:
         return random.choice(population)
 
     @staticmethod
-    def resolve_outbound_ip(outbound_address, bootstrap_dns_ip, hosts):
+    def resolve_outbound_ip(outbound_address, bootstrap_dns_ip, hosts_dict):
         """Resolve ip address of HTTPS or TLS outbound with bootstrap dns address.
 
-        :param hosts: hosts dictionary to override dns response
-        :param outbound_address: domain name of HTTPS or TLS outbound
+        :param hosts_dict: Dict of hosts to resolve IP address.
+        :param outbound_address: Domain name of HTTPS or TLS outbound
         :param bootstrap_dns_ip: DNS server for resolving 'outbound_address'
         :return: RRSet Answer of HTTPS or TLS outbound
         """
-
+        if outbound_address in hosts_dict:
+            return hosts_dict[outbound_address]
         dns_query = dns.message.make_query(outbound_address, dns.rdatatype.A)
         response = dns.query.udp(dns_query, bootstrap_dns_ip)
-        if len(response.answer) == 1:
-            return response.answer[0].items[0].to_text()
-        else:
+        if response.answer:
             return response.answer[-1].items[0].to_text()
 
 
@@ -97,9 +96,9 @@ class WireMessageHandler:
     def handle_response(self, response):
         if not response:
             return None
-
-        for answer in response.answer:
-            self.cache.put(answer)
+        if self.cache:
+            for answer in response.answer:
+                self.cache.put(answer)
         return response.to_wire()
 
     def firewall_clearance(self, wire_message, client_ip):
@@ -143,11 +142,12 @@ class WireMessageHandler:
             # retrieve cached rrset from cache
             question_rrset = dns_message.question[0]
             question_name = question_rrset.name.to_text().rstrip('.')
-            cached_response_rrset, ttl = self.cache.get(question_rrset)
-            if cached_response_rrset:
-                dns_response = dns.message.make_response(dns_message)
-                dns_response.answer.append(cached_response_rrset)
-                return dns_response.to_wire()
+            if self.cache:
+                cached_response_rrset, ttl = self.cache.get(question_rrset)
+                if cached_response_rrset:
+                    dns_response = dns.message.make_response(dns_message)
+                    dns_response.answer.append(cached_response_rrset)
+                    return dns_response.to_wire()
 
             # check hosts
             hosts_record = encrypted_dns.utils.parse_domain_rules(self.hosts, question_name)
@@ -170,18 +170,19 @@ class WireMessageHandler:
 
             # list of outbounds in config.json
             outbound_group, is_concurrent = OutboundHandler.get_group(question_name, self.domain_group, self.tag_group)
+            proxy = outbound_group.get('proxies', None)
             if is_concurrent:
                 executor = concurrent.futures.ThreadPoolExecutor(max_workers=10)
                 result_pool = []
                 for outbound in outbound_group['dns']:
-                    result_pool.append(executor.submit(self._resolve_thread, outbound, dns_message, question_name))
+                    result_pool.append(executor.submit(self._resolve_thread, outbound, dns_message, question_name, proxy))
                 
                 first = concurrent.futures.wait(result_pool, timeout=60, return_when=concurrent.futures.FIRST_COMPLETED)
                 dns_response = next(iter(first[0])).result()
                 executor.shutdown()
             else:
                 outbound = OutboundHandler.random_outbound(outbound_group)
-                dns_response = self._resolve_thread(outbound, dns_message, question_name)
+                dns_response = self._resolve_thread(outbound, dns_message, question_name, proxy)
 
             return self.handle_response(dns_response)
 
@@ -203,8 +204,9 @@ class WireMessageHandler:
             print('[Error]: The DNS operation timed out')
         except Exception as exc:
             print('[Error]:', exc)
+            raise
 
-    def _resolve_thread(self, outbound, dns_message, question_name):
+    def _resolve_thread(self, outbound, dns_message, question_name, proxy):
         try:
             protocol, dns_address, port = encrypted_dns.utils.parse_dns_address(outbound)
             is_valid_ip_address = encrypted_dns.utils.is_valid_ipv4_address(dns_address)
@@ -220,7 +222,8 @@ class WireMessageHandler:
                     'protocol': protocol,
                     'domain': dns_address,
                     'ip': ip_address,
-                    'port': port
+                    'port': port,
+                    'proxy': proxy
                 }
             else:
                 outbound = {

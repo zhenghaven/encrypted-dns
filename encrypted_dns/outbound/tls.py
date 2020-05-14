@@ -42,6 +42,7 @@ class TLSOutbound():
 
         except socket.timeout:
             print('[Error] {}: socket timeout'.format(self._domain))
-
-        except Exception as exc:
-            print('[Error]', str(exc))
+        except Exception:
+            raise
+        finally:
+            wrap_sock.close()

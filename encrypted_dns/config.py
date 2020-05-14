@@ -5,8 +5,7 @@ import os
 class ConfigHandler:
     def __init__(self):
         self.DEFAULT_CONFIG = {
-            'log': False,
-            'ecs_ip_address': '1.2.3.4',
+            'ecs_ip_address': '128.97.0.0',
             'dnssec': False,
 
             'dns_cache': {
@@ -19,7 +18,7 @@ class ConfigHandler:
                 'AAAA_disabled': False,
                 'rate_limit': 30,
                 'client_blacklist': [
-                    '1.2.3.4'
+                    '128.97.0.0'
                 ]
             },
 
@@ -64,6 +63,10 @@ class ConfigHandler:
                 {
                     'tag': 'encrypted',
                     'dns': ['https://cloudflare-dns.com', 'tls://dns.google'],
+                    'proxies': {
+                        'http': 'http://127.0.0.1:1088',
+                        'https': 'http://127.0.0.1:1088'
+                    },
                     'concurrent': False,
                     'domains': ['all']
                 }
