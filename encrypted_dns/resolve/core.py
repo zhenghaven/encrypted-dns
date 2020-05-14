@@ -11,35 +11,6 @@ import dns.rdatatype
 import encrypted_dns.outbound
 
 
-class CacheHandler:
-    def __init__(self, override_ttl):
-        self._cache = {}
-        self._override_ttl = override_ttl
-
-    def get_cache_dict(self):
-        return self._cache
-
-    def get(self, rrset):
-        if (rrset.name, rrset.rdtype, rrset.rdclass) in self._cache:
-            (response_rrset, ttl, put_time) = self._cache[(rrset.name, rrset.rdtype, rrset.rdclass)]
-            # purge cache if time exceeds ttl
-            if int(time.time()) - put_time >= ttl:
-                self._cache.pop((rrset.name, rrset.rdtype, rrset.rdclass))
-                return None, None
-            else:
-                return response_rrset, ttl
-        return None, None
-
-    def put(self, rrset):
-        if self._override_ttl == -1:
-            self._cache[(rrset.name, rrset.rdtype, rrset.rdclass)] = (rrset, rrset.ttl, int(time.time()))
-        else:
-            self._cache[(rrset.name, rrset.rdtype, rrset.rdclass)] = (rrset, self._override_ttl, int(time.time()))
-
-    def flush(self):
-        self._cache = {}
-
-
 class OutboundHandler:
     @staticmethod
     def get_group(query_name, domain_group, tag_group, rules=None):
@@ -48,8 +19,8 @@ class OutboundHandler:
 
     @staticmethod
     def random_outbound(outbounds):
-        """
-        Get a random outbound from the list of outbounds specified in config.json.
+        """Get a random outbound from the list of outbounds specified in config.json.
+
         :param outbounds: List of outbounds.
         :return: Dictionary of outbound and type of outbound
         """
@@ -60,15 +31,13 @@ class OutboundHandler:
 
     @staticmethod
     def resolve_outbound_ip(outbound_address, bootstrap_dns_ip, hosts):
-        """
-        Resolve ip address of HTTPS or TLS outbound with bootstrap dns address.
+        """Resolve ip address of HTTPS or TLS outbound with bootstrap dns address.
+
         :param hosts: hosts dictionary to override dns response
         :param outbound_address: domain name of HTTPS or TLS outbound
         :param bootstrap_dns_ip: DNS server for resolving 'outbound_address'
         :return: RRSet Answer of HTTPS or TLS outbound
         """
-        # if outbound_address in hosts:
-        #     return hosts[outbound_address]
 
         dns_query = dns.message.make_query(outbound_address, dns.rdatatype.A)
         response = dns.query.udp(dns_query, bootstrap_dns_ip)
@@ -87,7 +56,7 @@ class WireMessageHandler:
         self.firewall = firewall
         self.rate_per_second = [0, int(time.time())]
 
-        # create a dictionary that map protocol of outbound to the method for resolve
+        # map protocol of outbound to the method for resolve
         self.protocol_methods = {
             'udp': WireMessageHandler._udp_resolve,
             'tcp': WireMessageHandler._tcp_resolve,
@@ -106,8 +75,8 @@ class WireMessageHandler:
 
     @staticmethod
     def edns_subnet_client(query_message, ip):
-        """
-        Add edns subnet client option to query messages.
+        """Add edns subnet client option to query messages.
+
         :param query_message: DNS query message for processing.
         :param ip: IP Address to add as an option.
         :return: Processed DNS query message.
@@ -157,18 +126,19 @@ class WireMessageHandler:
         return True
 
     def wire_resolve(self, wire_message):
-        """
-        Parse wire messages received by inbounds and forward them to corresponding outbounds.
+        """Parse wire messages received by inbounds and forward them to corresponding outbounds.
+
         :param wire_message: DNS query message received by inbound.
         :return: DNS response to the query.
         """
+        
         try:
             dns_message = dns.message.from_wire(wire_message)
             message_flags = dns.flags.to_text(dns_message.flags)
 
             # raise an exception since 'wire_resolve' method should only process dns queries
             if 'QR' in message_flags:
-                raise Exception()
+                raise TypeError("DNS Resolver should only receive queries")
 
             # retrieve cached rrset from cache
             question_rrset = dns_message.question[0]
@@ -200,14 +170,12 @@ class WireMessageHandler:
 
             # list of outbounds in config.json
             outbound_group, is_concurrent = OutboundHandler.get_group(question_name, self.domain_group, self.tag_group)
-
-            executor = concurrent.futures.ThreadPoolExecutor(max_workers=10)
-
-            result_pool = []
             if is_concurrent:
+                executor = concurrent.futures.ThreadPoolExecutor(max_workers=10)
+                result_pool = []
                 for outbound in outbound_group['dns']:
                     result_pool.append(executor.submit(self._resolve_thread, outbound, dns_message, question_name))
-
+                
                 first = concurrent.futures.wait(result_pool, timeout=60, return_when=concurrent.futures.FIRST_COMPLETED)
                 dns_response = next(iter(first[0])).result()
                 executor.shutdown()
@@ -233,36 +201,40 @@ class WireMessageHandler:
             print('[Error]: The label type in DNS name wire format is unknown')
         except dns.exception.Timeout:
             print('[Error]: The DNS operation timed out')
+        except Exception as exc:
+            print('[Error]:', exc)
 
     def _resolve_thread(self, outbound, dns_message, question_name):
-        protocol, dns_address, port = encrypted_dns.utils.parse_dns_address(outbound)
-        is_valid_ip_address = encrypted_dns.utils.is_valid_ipv4_address(dns_address)
+        try:
+            protocol, dns_address, port = encrypted_dns.utils.parse_dns_address(outbound)
+            is_valid_ip_address = encrypted_dns.utils.is_valid_ipv4_address(dns_address)
 
-        if protocol in ('https', 'tls', 'doh', 'dot') and not is_valid_ip_address:
-            if 'bootstrap' in self.tag_group:
-                bootstrap_dns_ip = self.tag_group['bootstrap']['dns'][0]
+            if protocol in ('https', 'tls', 'doh', 'dot') and not is_valid_ip_address:
+                if 'bootstrap' in self.tag_group:
+                    bootstrap_dns_ip = self.tag_group['bootstrap']['dns'][0]
+                else:
+                    bootstrap_dns_ip = '1.0.0.1'
+
+                ip_address = OutboundHandler.resolve_outbound_ip(dns_address, bootstrap_dns_ip, self.hosts)
+                outbound = {
+                    'protocol': protocol,
+                    'domain': dns_address,
+                    'ip': ip_address,
+                    'port': port
+                }
             else:
-                bootstrap_dns_ip = '1.0.0.1'
+                outbound = {
+                    'protocol': protocol,
+                    'ip': dns_address,
+                    'port': port
+                }
 
-            ip_address = OutboundHandler.resolve_outbound_ip(dns_address, bootstrap_dns_ip, self.hosts)
-            outbound = {
-                'protocol': protocol,
-                'domain': dns_address,
-                'ip': ip_address,
-                'port': port
-            }
-        else:
-            outbound = {
-                'protocol': protocol,
-                'ip': dns_address,
-                'port': port
-            }
-
-        dns_response = self.protocol_methods[protocol].__call__(dns_message, outbound)
-
-        if self.dnssec and not self.validate_dnssec(question_name, outbound, protocol):
-            dns_response = None
-        return dns_response
+            dns_response = self.protocol_methods[protocol].__call__(dns_message, outbound)
+            if self.dnssec and not self.validate_dnssec(question_name, outbound, protocol):
+                return None
+            return dns_response
+        except Exception:
+            raise
 
     @staticmethod
     def _udp_resolve(dns_message, outbound):

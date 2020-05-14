@@ -8,9 +8,8 @@ import dns.message
 from encrypted_dns.outbound import BaseOutbound
 
 
-class HTTPSOutbound(BaseOutbound):
+class HTTPSOutbound():
     def __init__(self, domain, port, timeout, proxies, ip):
-        super().__init__()
         self._domain = domain
         self._port = port
         self._timeout = timeout

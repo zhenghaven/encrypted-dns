@@ -1,20 +1,14 @@
 import dns.query
 
-from encrypted_dns.outbound import BaseOutbound
 
-
-class StreamOutbound(BaseOutbound):
+class StreamOutbound():
     def __init__(self, ip, port, timeout):
-        super().__init__()
         self._ip = ip
         self._port = port
         self._timeout = timeout
 
     @classmethod
     def from_dict(cls, outbound_dict):
-        super()
-        if outbound_dict['protocol'] != 'tcp':
-            raise Exception()
         ip = outbound_dict['ip']
         port = outbound_dict.get('port', 53)
         timeout = outbound_dict.get('timeout', 60)

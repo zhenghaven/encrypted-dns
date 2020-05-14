@@ -3,20 +3,18 @@ import threading
 import encrypted_dns
 
 
-def _udp_inbound(host, port, core_object):
-    return encrypted_dns.inbound.DatagramInbound.serve(host, port, core_object)
-
-
-def _tcp_inbound(host, port, core_object):
-    return encrypted_dns.inbound.StreamInbound.serve(host, port, core_object)
+def create_inbound(protocol, host, port, core_object):
+    if protocol == 'udp':
+        return encrypted_dns.inbound.DatagramInbound.serve(host, port, core_object)
+    elif protocol == 'tcp':
+        return encrypted_dns.inbound.StreamInbound.serve(host, port, core_object)
+    elif protocol in {'https', 'doh', 'tls', 'dot'}:
+        raise ValueError("{} inbound protocol is not supported yet".format(protocol))
+    else:
+        raise ValueError("Unknown inbound protocol '{}'".format(protocol))
 
 
 def start():
-    protocol_methods = {
-        'udp': _udp_inbound,
-        'tcp': _tcp_inbound
-    }
-
     safe_search = {
         'include:google.': 'forcesafesearch.google.com',
         'www.bing.com': 'strict.bing.com',
@@ -33,12 +31,14 @@ def start():
 
     # create cache object
     if config.get_config('dns_cache')['enable']:
-        cache_object = encrypted_dns.resolve.CacheHandler(config.get_config('dns_cache')['override_ttl'])
+        cache_object = encrypted_dns.resolve.CacheHandler(
+            config.get_config('dns_cache')['override_ttl']
+            )
     else:
         cache_object = None
 
     # parse hosts
-    hosts = {}
+    hosts = dict()
     hosts_config = config.get_config('rules')
     if hosts_config:
         hosts.update(hosts_config.get('hosts', {}))
@@ -57,8 +57,8 @@ def start():
     for inbound in config.get_config('inbounds'):
         protocol, host, port = encrypted_dns.utils.parse_dns_address(inbound)
         inbound_object = threading.Thread(
-            target=protocol_methods[protocol],
-            args=(host, port, wire_message_handler_object),
+            target=create_inbound,
+            args=(protocol, host, port, wire_message_handler_object),
             daemon=True
         ).start()
         inbound_thread_pool.append(inbound_object)
@@ -67,4 +67,5 @@ def start():
         pass
 
 
-start()
+if __name__ == "__main__":
+    start()

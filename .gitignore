@@ -118,3 +118,4 @@ dmypy.json
 config.json
 logs/*
 test.py
+.DS_Store

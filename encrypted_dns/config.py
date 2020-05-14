@@ -3,7 +3,6 @@ import os
 
 
 class ConfigHandler:
-
     def __init__(self):
         self.DEFAULT_CONFIG = {
             'log': False,

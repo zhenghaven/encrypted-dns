@@ -3,12 +3,9 @@ import ssl
 
 import dns.message
 
-from encrypted_dns.outbound import BaseOutbound
 
-
-class TLSOutbound(BaseOutbound):
+class TLSOutbound():
     def __init__(self, domain, port, timeout, ip):
-        super().__init__()
         self._domain = domain
         self._port = port
         self._timeout = timeout
@@ -16,7 +13,6 @@ class TLSOutbound(BaseOutbound):
 
     @classmethod
     def from_dict(cls, outbound_dict):
-        super()
         if outbound_dict['protocol'] != 'tls' and outbound_dict['protocol'] != 'dot':
             raise Exception()
 

@@ -1,12 +1,12 @@
 import socketserver
 
-wire_message_handler = None
+wire_message_handler = []
 
 
 class DatagramInbound:
     @staticmethod
     def setup(host, port):
-        print("Datagram Inbound starts listening on {}:{}".format(host, port))
+        print("UDP Inbound starts listening on {}:{}".format(host, port))
 
     @staticmethod
     def serve(host, port, wire_message_handler_object):
@@ -16,8 +16,7 @@ class DatagramInbound:
         :param port: Port of Datagram Inbound Server.
         :return: Object reference of Datagram Inbound Server.
         """
-        global wire_message_handler
-        wire_message_handler = wire_message_handler_object
+        wire_message_handler.append(wire_message_handler_object)
         datagram_inbound = socketserver.ThreadingUDPServer((host, port), DatagramHandler)
         DatagramInbound.setup(host, port)
         datagram_inbound.serve_forever()
@@ -31,11 +30,10 @@ class DatagramHandler(socketserver.BaseRequestHandler):
         to resolve through outbound protocols.
         Send the resolved DNS responses to clients.
         """
-        global wire_message_handler
+
         wire_data = self.request[0].strip()
-        # check firewall rules
-        if wire_message_handler.firewall_clearance(wire_data, self.client_address[0]):
-            resolve_data = wire_message_handler.wire_resolve(wire_data)
+        if wire_message_handler[0].firewall_clearance(wire_data, self.client_address[0]):
+            resolve_data = wire_message_handler[0].wire_resolve(wire_data)
             datagram_socket = self.request[1]
             if resolve_data:
                 datagram_socket.sendto(resolve_data, self.client_address)

@@ -1,11 +1,8 @@
 import dns.query
 
-from encrypted_dns.outbound import BaseOutbound
 
-
-class DatagramOutbound(BaseOutbound):
+class DatagramOutbound():
     def __init__(self, ip, port, timeout):
-        super().__init__()
         self._ip = ip
         self._port = port
         self._timeout = timeout
