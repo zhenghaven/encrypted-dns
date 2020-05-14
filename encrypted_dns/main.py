@@ -1,4 +1,5 @@
 import threading
+import time
 
 import encrypted_dns
 
@@ -65,9 +66,12 @@ def start():
             inbound_thread_pool.append(inbound_object)
 
         while True:
-            pass
+            time.sleep(1)
+
     except Exception as exc:
         print("[Error]:", exc)
+    except KeyboardInterrupt:
+        pass
     finally:
         for t in inbound_thread_pool:
             if t and t.is_alive():

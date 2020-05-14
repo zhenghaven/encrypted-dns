@@ -135,6 +135,7 @@ Encrypted-DNS will only forward queries to this group only if the domain is incl
 ### Bootstrap DNS Group
 
 Encrypted-DNS will send DNS queries to the server in the `bootstrap` DNS group to retrieve the IP addresses of DNS-over-HTTPS or DNS-over-TLS server.
+
 If the group is not specified, Encrypted-DNS will use `1.0.0.1` to resolve the IP addresses.
 
 ```
@@ -150,6 +151,7 @@ If the group is not specified, Encrypted-DNS will use `1.0.0.1` to resolve the I
 ### DNS Cache
 
 Cache DNS responses to reduce latency for further queries.
+
 If `override_ttl` is `-1`, Encrypted-DNS will use default TTL for each record.
 
 ```
@@ -204,7 +206,9 @@ Rules to match domain in `hosts`:
 ### EDNS Client Subnet
 
 EDNS Client Subnet is a DNS extension that allows Encrypted-DNS to specify the network subnet for the host on which behalf it is making a DNS query.
+
 This is generally intended to help speed up the delivery of data from CDN, by allowing better use of DNS-based load balancing to select a service address serving the content expected to be hosted at that domain name, when the client computer is in a different network location from the recursive resolver.
+
 To disable this feature, set `ecs_ip_address` to `null`.
 
 ```

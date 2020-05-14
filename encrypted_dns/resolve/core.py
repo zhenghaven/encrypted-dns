@@ -102,27 +102,30 @@ class WireMessageHandler:
         return response.to_wire()
 
     def firewall_clearance(self, wire_message, client_ip):
-        dns_message = dns.message.from_wire(wire_message)
-        if client_ip in self.firewall['client_blacklist']:
-            return False
-
-        if self.firewall['rate_limit'] > -1:
-            self.rate_per_second[0] += 1
-            if int(time.time()) - self.rate_per_second[1] >= 1:
-                self.rate_per_second = [0, int(time.time())]
-            if self.firewall['rate_limit'] <= self.rate_per_second[0]:
+        try:
+            dns_message = dns.message.from_wire(wire_message)
+            if client_ip in self.firewall['client_blacklist']:
                 return False
 
-        if self.firewall['refuse_ANY']:
-            for q in dns_message.question:
-                if q.rdtype == dns.rdatatype.ANY:
+            if self.firewall['rate_limit'] > -1:
+                self.rate_per_second[0] += 1
+                if int(time.time()) - self.rate_per_second[1] >= 1:
+                    self.rate_per_second = [0, int(time.time())]
+                if self.firewall['rate_limit'] <= self.rate_per_second[0]:
                     return False
 
-        if self.firewall['AAAA_disabled']:
-            for q in dns_message.question:
-                if q.rdtype == dns.rdatatype.AAAA:
-                    return False
-        return True
+            if self.firewall['refuse_ANY']:
+                for q in dns_message.question:
+                    if q.rdtype == dns.rdatatype.ANY:
+                        return False
+
+            if self.firewall['AAAA_disabled']:
+                for q in dns_message.question:
+                    if q.rdtype == dns.rdatatype.AAAA:
+                        return False
+            return True
+        except Exception as exc:
+            print("[Error]:", exc)
 
     def wire_resolve(self, wire_message):
         """Parse wire messages received by inbounds and forward them to corresponding outbounds.
@@ -204,7 +207,6 @@ class WireMessageHandler:
             print('[Error]: The DNS operation timed out')
         except Exception as exc:
             print('[Error]:', exc)
-            raise
 
     def _resolve_thread(self, outbound, dns_message, question_name, proxy):
         try:

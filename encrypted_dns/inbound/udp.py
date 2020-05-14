@@ -16,11 +16,14 @@ class DatagramInbound:
         :param port: Port of Datagram Inbound Server.
         :return: Object reference of Datagram Inbound Server.
         """
-        wire_message_handler.append(wire_message_handler_object)
-        datagram_inbound = socketserver.ThreadingUDPServer((host, port), DatagramHandler)
-        DatagramInbound.setup(host, port)
-        datagram_inbound.serve_forever()
-        return datagram_inbound
+        try:
+            wire_message_handler.append(wire_message_handler_object)
+            datagram_inbound = socketserver.ThreadingUDPServer((host, port), DatagramHandler)
+            DatagramInbound.setup(host, port)
+            datagram_inbound.serve_forever()
+            return datagram_inbound
+        except OSError as exc:
+            print("[Error]:", exc)
 
 
 class DatagramHandler(socketserver.BaseRequestHandler):

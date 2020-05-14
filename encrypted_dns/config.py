@@ -59,15 +59,11 @@ class ConfigHandler:
                     'tag': 'unencrypted',
                     'dns': ['1.0.0.1', 'tcp://8.8.4.4'],
                     'concurrent': False,
-                    'domains': ['sub:youtube.com', 'include:netflix.com']
+                    'domains': ['sub:youtube.com', 'include:netflix.com'],
                 },
                 {
                     'tag': 'encrypted',
                     'dns': ['https://cloudflare-dns.com', 'tls://dns.google'],
-                    'proxies': {
-                        'http': 'http://127.0.0.1:1088',
-                        'https': 'http://127.0.0.1:1088'
-                    },
                     'concurrent': False,
                     'domains': ['all']
                 }

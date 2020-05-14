@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="encrypted-dns",
-    version="1.1.4",
+    version="1.2.0",
     author="Xiaoyang Liu",
     author_email="siujoeng.lau@gmail.com",
     description="DNS-over-HTTPS and DNS-over-TLS server and forwarder.",
