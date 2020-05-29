@@ -2,14 +2,15 @@
 
 # Encrypted-DNS
 
-## Introduction
-[![License](https://img.shields.io/github/license/Siujoeng-Lau/Encrypted-DNS.svg)](https://github.com/Siujoeng-Lau/Encrypted-DNS/blob/master/LICENSE)
-[![Releases](https://img.shields.io/github/v/release/Siujoeng-Lau/Encrypted-DNS)](https://github.com/Siujoeng-Lau/Encrypted-DNS/releases)
-[![Downloads](https://pepy.tech/badge/encrypted-dns)](https://pepy.tech/project/encrypted-dns)
+[![License](https://img.shields.io/github/license/Berkeley-Reject/Encrypted-DNS.svg?style=for-the-badge)](https://github.com/Berkeley-Reject/Encrypted-DNS/blob/master/LICENSE)
+[![Releases](https://img.shields.io/github/v/release/Berkeley-Reject/Encrypted-DNS?style=for-the-badge)](https://github.com/Berkeley-Reject/Encrypted-DNS/releases)
+[![Downloads](https://img.shields.io/pypi/dm/encrypted-dns?style=for-the-badge)](https://pypistats.org/packages/encrypted-dns)
 
 [Issues](https://github.com/Berkeley-Reject/Encrypted-DNS/issues) |
 [Pull requests](https://github.com/Berkeley-Reject/Encrypted-DNS/pulls) | 
 [Contributors](https://github.com/Berkeley-Reject/Encrypted-DNS/graphs/contributors)
+
+## Introduction
 
 Encrypted-DNS operates as a DNS server that forward DNS queries over UDP, TCP, TLS or HTTPS, thus preventing your device from DNS cache poisoning and censorship.
 It could also cache DNS records to accelerate further queries, block specific client, and ignore particular domain names.
@@ -22,8 +23,8 @@ It could also cache DNS records to accelerate further queries, block specific cl
 * Transparent redirection of specific domains to specific resolvers
 * Send queries through HTTP proxies
 * Cache DNS response with default or customized TTL to reduce latency
-* Force Safe search on search engines (Google, DuckDuckGo, Bing, etc.)
-* Firewall rules: Rate limiting, client blacklist, and disable AAAA or ANY lookups.
+* Force Safe search on search engines such as Google, Bing, DuckDuckGo
+* Firewall rules: Rate limiting, client blacklist, and disable AAAA or ANY lookups
 
 ## Installation
 
