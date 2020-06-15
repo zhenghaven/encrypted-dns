@@ -5,43 +5,43 @@ import os
 class ConfigHandler:
     def __init__(self):
         self.DEFAULT_CONFIG = {
-            'version': '1.2.0',
-            'ecs_ip_address': '128.97.0.0',
-            'dnssec': False,
+            "version": "1.2.0",
+            "ecs_ip_address": "128.97.0.0",
+            "dnssec": False,
 
-            'dns_cache': {
-                'enable': True,
-                'override_ttl': 3600
+            "dns_cache": {
+                "enable": True,
+                "override_ttl": 3600
             },
 
-            'firewall': {
-                'refuse_ANY': True,
-                'AAAA_disabled': False,
-                'rate_limit': 30,
-                'client_blacklist': [
-                    '128.97.0.0'
+            "firewall": {
+                "refuse_ANY": True,
+                "disable_AAAA": True,
+                "rate_limit": 30,
+                "client_blacklist": [
+                    "128.97.0.0"
                 ]
             },
 
-            'rules': {
-                'force_safe_search': False,
-                'hosts': {
-                    'localhost': '127.0.0.1',
-                    'cloudflare-dns.com': '1.0.0.1',
-                    'dns.google': '8.8.4.4'
+            "rules": {
+                "force_safe_search": True,
+                "hosts": {
+                    "localhost": "127.0.0.1",
+                    "cloudflare-dns.com": "1.0.0.1",
+                    "dns.google": "8.8.4.4"
                 }
             },
 
-            'inbounds': [
-                '0.0.0.0:53',
-                'tcp://0.0.0.0:5301'
+            "inbounds": [
+                "0.0.0.0:53",
+                "tcp://0.0.0.0:5301"
             ],
 
-            'outbounds': [
+            "outbounds": [
                 {
-                    'tag': 'bootstrap',
-                    'dns': ['1.0.0.1'],
-                    'domains': [
+                    "tag": "bootstrap",
+                    "dns": ["1.0.0.1"],
+                    "domains": [
                         "captive.apple.com",
                         "connectivitycheck.gstatic.com",
                         "detectportal.firefox.com",
@@ -56,23 +56,33 @@ class ConfigHandler:
                     ]
                 },
                 {
-                    'tag': 'unencrypted',
-                    'dns': ['1.0.0.1', 'tcp://8.8.4.4'],
-                    'concurrent': False,
-                    'domains': ['sub:youtube.com', 'include:netflix.com'],
+                    "tag": "void",
+                    "dns": ["0.0.0.0"],
+                    "concurrent": False,
+                    "domains": [
+                        "testvoid.com",
+                        "include:testinclude",
+                        "subdomain:testsub.com"
+                    ]
                 },
                 {
-                    'tag': 'encrypted',
-                    'dns': ['https://cloudflare-dns.com', 'tls://dns.google'],
-                    'concurrent': False,
-                    'domains': ['all']
+                    "tag": "unencrypted",
+                    "dns": ["1.0.0.1", "tcp://8.8.4.4"],
+                    "concurrent": False,
+                    "domains": ["sub:youtube.com", "include:netflix.com"],
+                },
+                {
+                    "tag": "encrypted",
+                    "dns": ["https://cloudflare-dns.com", "tls://dns.google"],
+                    "concurrent": False,
+                    "domains": ["all"]
                 }
             ]
         }
 
         self.config = {}
         self.home = os.path.expanduser("~")
-        self.file_name = self.home.rstrip('/') + '/.config/encrypted_dns/config.json'
+        self.file_name = self.home.rstrip("/") + "/.config/encrypted_dns/config.json"
         self.load()
 
     def check_format(self):
@@ -96,28 +106,28 @@ class ConfigHandler:
         if not file_init:
             self.config = self.get_default_config()
             self.save()
-            print('Generated default config file:', self.file_name)
-            print('Please edit config file and restart Encrypted-DNS')
+            print("Generated default config file:", self.file_name)
+            print("Please edit config file and restart Encrypted-DNS")
             exit()
         else:
             config_file = open(self.file_name)
             self.config = json.loads(config_file.read())
-            if self.config.get('version'):
-                print('Load config file:', self.file_name)
+            if self.config.get("version"):
+                print("Load config file:", self.file_name)
             else:
-                print('This config file is deprecated')
-                print('Generated default config file:', self.file_name)
-                print('Please edit config file and restart Encrypted-DNS')
+                print("This config file is deprecated")
+                print("Generated default config file:", self.file_name)
+                print("Please edit config file and restart Encrypted-DNS")
                 self.config = self.get_default_config()
                 self.save()
                 exit()
 
     def save(self):
-        if not os.path.exists(self.home.rstrip('/') + '/.config/'):
-            os.makedirs(self.home.rstrip('/') + '/.config/')
+        if not os.path.exists(self.home.rstrip("/") + "/.config/"):
+            os.makedirs(self.home.rstrip("/") + "/.config/")
 
-        if not os.path.exists(self.home.rstrip('/') + '/.config/encrypted_dns'):
-            os.makedirs(self.home.rstrip('/') + '/.config/encrypted_dns')
+        if not os.path.exists(self.home.rstrip("/") + "/.config/encrypted_dns"):
+            os.makedirs(self.home.rstrip("/") + "/.config/encrypted_dns")
 
         config_json = json.dumps(self.config, indent=4)
         config_file = open(self.file_name, "w")

@@ -119,7 +119,7 @@ class WireMessageHandler:
                     if q.rdtype == dns.rdatatype.ANY:
                         return False
 
-            if self.firewall['AAAA_disabled']:
+            if self.firewall['disable_AAAA']:
                 for q in dns_message.question:
                     if q.rdtype == dns.rdatatype.AAAA:
                         return False

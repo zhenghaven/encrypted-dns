@@ -15,7 +15,7 @@ def create_inbound(protocol, host, port, core_object):
         raise ValueError("Unknown inbound protocol '{}'".format(protocol))
 
 
-def start():
+def start(test=False):
     safe_search = {
         'include:google.': 'forcesafesearch.google.com',
         'www.bing.com': 'strict.bing.com',
@@ -29,7 +29,10 @@ def start():
 
     inbound_thread_pool = []
     try:
-        config = encrypted_dns.ConfigHandler().check_format()
+        if test:
+            config = encrypted_dns.ConfigHandler.get_default_config()
+        else:
+            config = encrypted_dns.ConfigHandler.check_format()
 
         # create cache object
         if config.get_config('dns_cache')['enable']:
