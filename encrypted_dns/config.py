@@ -88,6 +88,10 @@ class ConfigHandler:
     def check_format(self):
         return self
 
+    def set_default_config(self):
+        self.config = self.get_default_config()
+        return self
+
     def get_config(self, key=None):
         if key is None:
             return self.config

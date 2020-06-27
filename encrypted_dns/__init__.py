@@ -1,4 +1,5 @@
 import encrypted_dns.inbound
+import encrypted_dns.main
 import encrypted_dns.outbound
 import encrypted_dns.resolve
 import encrypted_dns.utils

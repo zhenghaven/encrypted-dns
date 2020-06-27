@@ -30,9 +30,9 @@ def start(test=False):
     inbound_thread_pool = []
     try:
         if test:
-            config = encrypted_dns.ConfigHandler.get_default_config()
+            config = encrypted_dns.ConfigHandler().set_default_config()
         else:
-            config = encrypted_dns.ConfigHandler.check_format()
+            config = encrypted_dns.ConfigHandler().check_format()
 
         # create cache object
         if config.get_config('dns_cache')['enable']:
