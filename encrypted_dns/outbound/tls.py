@@ -19,7 +19,7 @@ class TLSOutbound():
             raise Exception()
 
         ip = outbound_dict['ip']
-        domain = outbound_dict['domain']
+        domain = outbound_dict.get('domain', ip)
         port = outbound_dict.get('port', 853)
         timeout = outbound_dict.get('timeout', 60)
         return cls(domain, port, timeout, ip)
