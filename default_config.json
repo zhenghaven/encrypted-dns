@@ -1,6 +1,6 @@
 {
     "version": "1.2.0",
-    "ecs_ip_address": "128.97.0.0",
+    "ecs_ip_address": null,
     "dnssec": false,
     "dns_cache": {
         "enable": true,
@@ -8,18 +8,19 @@
     },
     "firewall": {
         "refuse_ANY": true,
-        "disable_AAAA": true,
-        "rate_limit": 30,
-        "client_blacklist": [
-            "128.97.0.0"
-        ]
+        "disable_AAAA": false,
+        "rate_limit": 60000,
+        "client_blacklist": []
     },
     "rules": {
-        "force_safe_search": true,
+        "force_safe_search": false,
         "hosts": {
-            "localhost": "127.0.0.1",
-            "cloudflare-dns.com": "1.0.0.1",
-            "dns.google": "8.8.4.4"
+            "localhost"          : "127.0.0.1",
+            "cloudflare-dns.com" : "1.1.1.1",
+            "dns.google"         : "8.8.8.8",
+            "dns.google.com"     : "8.8.8.8",
+            "dns.alidns.com"     : "223.5.5.5",
+            "dns2.alidns.com"    : "223.6.6.6"
         }
     },
     "inbounds": [
@@ -30,55 +31,36 @@
         {
             "tag": "bootstrap",
             "dns": [
-                "1.0.0.1"
-            ],
-            "domains": [
-                "captive.apple.com",
-                "connectivitycheck.gstatic.com",
-                "detectportal.firefox.com",
-                "msftconnecttest.com",
-                "nmcheck.gnome.org",
-                "pool.ntp.org",
-                "time.apple.com",
-                "time.asia.apple.com",
-                "time.euro.apple.com",
-                "time.nist.gov",
-                "time.windows.com"
-            ]
-        },
-        {
-            "tag": "void",
-            "dns": [
                 "0.0.0.0"
             ],
-            "concurrent": false,
-            "domains": [
-                "testvoid.com",
-                "include:testinclude",
-                "subdomain:testsub.com"
-            ]
+            "domains": []
         },
         {
-            "tag": "unencrypted",
+            "tag": "default",
             "dns": [
-                "1.0.0.1",
-                "tcp://8.8.4.4"
+                "tls://cloudflare-dns.com",
+                "tls://1.0.0.1",
+                "tls://dns.google",
+                "tls://8.8.4.4"
             ],
             "concurrent": false,
             "domains": [
-                "sub:youtube.com",
-                "include:netflix.com"
+                "all"
             ]
         },
         {
             "tag": "encrypted",
             "dns": [
-                "https://cloudflare-dns.com",
-                "tls://dns.google"
+                "tls://cloudflare-dns.com",
+                "tls://1.0.0.1",
+                "tls://dns.google",
+                "tls://8.8.4.4"
             ],
             "concurrent": false,
             "domains": [
-                "all"
+                "sub:google.com",
+                "sub:gmail.com",
+                "sub:facebook.com"
             ]
         }
     ]
