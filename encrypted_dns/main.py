@@ -1,5 +1,7 @@
 import threading
 import time
+import sys
+import logging
 
 import encrypted_dns
 
@@ -16,6 +18,12 @@ def create_inbound(protocol, host, port, core_object):
 
 
 def start(test=False):
+    logging.basicConfig(format='[%(asctime)s][%(name)s](%(levelname)s) %(message)s',
+                        level='DEBUG',
+                        stream=sys.stdout)
+
+    logger = logging.getLogger("encrypted_dns")
+
     safe_search = {
         'include:google.': 'forcesafesearch.google.com',
         'www.bing.com': 'strict.bing.com',
@@ -72,7 +80,7 @@ def start(test=False):
             time.sleep(1)
 
     except Exception as exc:
-        print("[Error]:", exc)
+        logger.error(str(exc))
     except KeyboardInterrupt:
         pass
     finally:

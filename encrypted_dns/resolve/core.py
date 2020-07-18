@@ -1,6 +1,7 @@
 import concurrent.futures
 import random
 import time
+import logging
 
 import dns.dnssec
 import dns.edns
@@ -54,6 +55,7 @@ class WireMessageHandler:
         self.dnssec = dnssec
         self.firewall = firewall
         self.rate_per_second = [0, int(time.time())]
+        self.logger = logging.getLogger("encrypted_dns.WireMessageHandler")
 
         # map protocol of outbound to the method for resolve
         self.protocol_methods = {
@@ -125,7 +127,7 @@ class WireMessageHandler:
                         return False
             return True
         except Exception as exc:
-            print("[Error]:", exc)
+            self.logger.error(str(exc))
 
     def wire_resolve(self, wire_message):
         """Parse wire messages received by inbounds and forward them to corresponding outbounds.
@@ -133,7 +135,7 @@ class WireMessageHandler:
         :param wire_message: DNS query message received by inbound.
         :return: DNS response to the query.
         """
-        
+
         try:
             dns_message = dns.message.from_wire(wire_message)
             message_flags = dns.flags.to_text(dns_message.flags)
@@ -179,7 +181,7 @@ class WireMessageHandler:
                 result_pool = []
                 for outbound in outbound_group['dns']:
                     result_pool.append(executor.submit(self._resolve_thread, outbound, dns_message, question_name, proxy))
-                
+
                 first = concurrent.futures.wait(result_pool, timeout=60, return_when=concurrent.futures.FIRST_COMPLETED)
                 dns_response = next(iter(first[0])).result()
                 executor.shutdown()
@@ -190,23 +192,23 @@ class WireMessageHandler:
             return self.handle_response(dns_response)
 
         except dns.message.ShortHeader:
-            print('[Error]: The DNS packet passed to from_wire() is too short')
+            self.logger.error('The DNS packet passed to from_wire() is too short')
         except dns.message.TrailingJunk:
-            print('[Error]:The DNS packet passed to from_wire() has extra junk at the end of it')
+            self.logger.error('The DNS packet passed to from_wire() has extra junk at the end of it')
         except dns.message.UnknownHeaderField:
-            print('[Error]: The header field name was not recognized when converting from text into a message')
+            self.logger.error('The header field name was not recognized when converting from text into a message')
         except dns.message.BadEDNS:
-            print('[Error]: An OPT record occurred somewhere other than the start of the additional data section')
+            self.logger.error('An OPT record occurred somewhere other than the start of the additional data section')
         except dns.message.UnknownTSIGKey:
-            print('[Error]: A TSIG with an unknown key was received')
+            self.logger.error('A TSIG with an unknown key was received')
         except dns.message.BadTSIG:
-            print('[Error]: A TSIG record occurred somewhere other than the end of the additional data section')
+            self.logger.error('A TSIG record occurred somewhere other than the end of the additional data section')
         except dns.name.BadLabelType:
-            print('[Error]: The label type in DNS name wire format is unknown')
+            self.logger.error('The label type in DNS name wire format is unknown')
         except dns.exception.Timeout:
-            print('[Error]: The DNS operation timed out')
+            self.logger.error('The DNS operation timed out')
         except Exception as exc:
-            print('[Error]:', exc)
+            self.logger.error(str(exc))
 
     def _resolve_thread(self, outbound, dns_message, question_name, proxy):
         try:

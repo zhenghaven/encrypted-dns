@@ -1,5 +1,6 @@
 import json
 import os
+import logging
 
 
 class ConfigHandler:
@@ -80,6 +81,7 @@ class ConfigHandler:
             ]
         }
 
+        self.logger = logging.getLogger("encrypted_dns.ConfigHandler")
         self.config = {}
         self.home = os.path.expanduser("~")
         self.file_name = self.home.rstrip("/") + "/.config/encrypted_dns/config.json"
@@ -110,18 +112,18 @@ class ConfigHandler:
         if not file_init:
             self.config = self.get_default_config()
             self.save()
-            print("Generated default config file:", self.file_name)
-            print("Please edit config file and restart Encrypted-DNS")
+            self.logger.info("Generated default config file: " + self.file_name)
+            self.logger.info("Please edit config file and restart Encrypted-DNS")
             exit()
         else:
             config_file = open(self.file_name)
             self.config = json.loads(config_file.read())
             if self.config.get("version"):
-                print("Load config file:", self.file_name)
+                self.logger.info("Load config file: " + self.file_name)
             else:
-                print("This config file is deprecated")
-                print("Generated default config file:", self.file_name)
-                print("Please edit config file and restart Encrypted-DNS")
+                self.logger.error("This config file is deprecated")
+                self.logger.info("Generated default config file: " + self.file_name)
+                self.logger.info("Please edit config file and restart Encrypted-DNS")
                 self.config = self.get_default_config()
                 self.save()
                 exit()

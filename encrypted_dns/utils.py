@@ -1,4 +1,5 @@
 import socket
+import logging
 
 
 def parse_domain_rules(rules, name, default=None):
@@ -21,6 +22,7 @@ def parse_domain_rules(rules, name, default=None):
 
 
 def parse_dns_address(dns_address):
+    logger = logging.getLogger("encrypted_dns.utils")
     try:
         port_dict = {
             'doh': 443,
@@ -46,7 +48,7 @@ def parse_dns_address(dns_address):
             dns_address = dns_address[0].rstrip('/')
         return protocol, dns_address, port
     except Exception as exc:
-        print("[Error]", exc)
+        logger.error(str(exc))
 
 
 def is_valid_ipv4_address(address):

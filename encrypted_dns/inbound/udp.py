@@ -1,4 +1,5 @@
 import socketserver
+import logging
 
 wire_message_handler = []
 
@@ -6,7 +7,8 @@ wire_message_handler = []
 class DatagramInbound:
     @staticmethod
     def setup(host, port):
-        print("UDP Inbound starts listening on {}:{}".format(host, port))
+        logger = logging.getLogger("encrypted_dns.DatagramInbound")
+        logger.info("UDP Inbound starts listening on {}:{}".format(host, port))
 
     @staticmethod
     def serve(host, port, wire_message_handler_object):
@@ -16,6 +18,7 @@ class DatagramInbound:
         :param port: Port of Datagram Inbound Server.
         :return: Object reference of Datagram Inbound Server.
         """
+        logger = logging.getLogger("encrypted_dns.DatagramInbound")
         try:
             wire_message_handler.append(wire_message_handler_object)
             datagram_inbound = socketserver.ThreadingUDPServer((host, port), DatagramHandler)
@@ -23,7 +26,7 @@ class DatagramInbound:
             datagram_inbound.serve_forever()
             return datagram_inbound
         except OSError as exc:
-            print("[Error]:", exc)
+            logger.error(str(exc))
 
 
 class DatagramHandler(socketserver.BaseRequestHandler):

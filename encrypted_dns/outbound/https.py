@@ -1,5 +1,6 @@
 import base64
 import socket
+import logging
 
 import dns.message
 import requests
@@ -12,6 +13,7 @@ class HTTPSOutbound:
         self._timeout = timeout
         self._proxies = proxies
         self._ip = ip
+        self.logger = logging.getLogger("encrypted_dns.HTTPSOutbound")
 
     @classmethod
     def from_dict(cls, outbound_dict):
@@ -45,7 +47,7 @@ class HTTPSOutbound:
                     response.raise_for_status()
 
         except socket.timeout:
-            print('[Error] {}: socket timeout'.format(self._domain))
+            self.logger.error('{}: socket timeout'.format(self._domain))
         except Exception:
             raise
         finally:

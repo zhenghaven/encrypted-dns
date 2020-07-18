@@ -1,5 +1,6 @@
 import socket
 import ssl
+import logging
 
 import dns.message
 
@@ -10,6 +11,7 @@ class TLSOutbound():
         self._port = port
         self._timeout = timeout
         self._ip = ip
+        self.logger = logging.getLogger("encrypted_dns.TLSOutbound")
 
     @classmethod
     def from_dict(cls, outbound_dict):
@@ -41,7 +43,7 @@ class TLSOutbound():
             # return dns.query.tls(dns_message, self._address, port=self._port, timeout=self._timeout)
 
         except socket.timeout:
-            print('[Error] {}: socket timeout'.format(self._domain))
+            self.logger.error('{}: socket timeout'.format(self._domain))
         except Exception:
             raise
         finally:

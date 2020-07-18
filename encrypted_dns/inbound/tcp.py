@@ -1,4 +1,5 @@
 import socketserver
+import logging
 
 wire_message_handler = []
 
@@ -6,7 +7,8 @@ wire_message_handler = []
 class StreamInbound:
     @staticmethod
     def setup(host, port):
-        print("TCP Inbound starts listening on {}:{}".format(host, port))
+        logger = logging.getLogger("encrypted_dns.StreamInbound")
+        logger.info("TCP Inbound starts listening on {}:{}".format(host, port))
 
     @staticmethod
     def serve(host, port, wire_message_handler_object):
