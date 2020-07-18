@@ -35,10 +35,15 @@ class TLSOutbound():
             with socket.create_connection((self._ip, self._port), timeout=self._timeout) as sock:
                 wrap_sock = context.wrap_socket(sock, server_hostname=self._domain)
 
-            query_data = "\x00".encode() + chr(len(query_message)).encode() + query_message
-            wrap_sock.send(query_data)
-            wrap_sock.recv(2)
-            return dns.message.from_wire(wrap_sock.recv(1024))
+                try:
+                    query_data = "\x00".encode() + chr(len(query_message)).encode() + query_message
+                    wrap_sock.send(query_data)
+                    wrap_sock.recv(2)
+                    return dns.message.from_wire(wrap_sock.recv(1024))
+                except:
+                    raise
+                finally:
+                    wrap_sock.close()
 
             # return dns.query.tls(dns_message, self._address, port=self._port, timeout=self._timeout)
 
@@ -46,5 +51,4 @@ class TLSOutbound():
             self.logger.error('{}: socket timeout'.format(self._domain))
         except Exception:
             raise
-        finally:
-            wrap_sock.close()
+
