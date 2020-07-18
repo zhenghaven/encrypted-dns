@@ -1,6 +1,7 @@
 import threading
 import time
 import sys
+import argparse
 import logging
 
 import encrypted_dns
@@ -18,6 +19,10 @@ def create_inbound(protocol, host, port, core_object):
 
 
 def start(test=False):
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-c', '--config', required=False, type=str, default="default_config.json", help="Path to configuration file.")
+    args = parser.parse_args()
+
     logging.basicConfig(format='[%(asctime)s][%(name)s](%(levelname)s) %(message)s',
                         level='DEBUG',
                         stream=sys.stdout)
@@ -38,9 +43,9 @@ def start(test=False):
     inbound_thread_pool = []
     try:
         if test:
-            config = encrypted_dns.ConfigHandler().set_default_config()
+            config = encrypted_dns.ConfigHandler(args.config).set_default_config()
         else:
-            config = encrypted_dns.ConfigHandler().check_format()
+            config = encrypted_dns.ConfigHandler(args.config).check_format()
 
         # create cache object
         if config.get_config('dns_cache')['enable']:

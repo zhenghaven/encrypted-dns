@@ -4,7 +4,7 @@ import logging
 
 
 class ConfigHandler:
-    def __init__(self):
+    def __init__(self, configPathStr):
         self.DEFAULT_CONFIG = {
             "version": "1.2.0",
             "ecs_ip_address": "128.97.0.0",
@@ -83,8 +83,7 @@ class ConfigHandler:
 
         self.logger = logging.getLogger("encrypted_dns.ConfigHandler")
         self.config = {}
-        self.home = os.path.expanduser("~")
-        self.file_name = self.home.rstrip("/") + "/.config/encrypted_dns/config.json"
+        self.file_name = configPathStr
         self.load()
 
     def check_format(self):
@@ -110,30 +109,25 @@ class ConfigHandler:
     def load(self):
         file_init = os.path.isfile(self.file_name)
         if not file_init:
-            self.config = self.get_default_config()
-            self.save()
-            self.logger.info("Generated default config file: " + self.file_name)
-            self.logger.info("Please edit config file and restart Encrypted-DNS")
-            exit()
+            errMsg = "Failed to load config file. config file is not found in " + self.file_name + "."
+            self.logger.error(errMsg)
+            raise Exception(errMsg)
         else:
             config_file = open(self.file_name)
             self.config = json.loads(config_file.read())
             if self.config.get("version"):
                 self.logger.info("Load config file: " + self.file_name)
             else:
-                self.logger.error("This config file is deprecated")
-                self.logger.info("Generated default config file: " + self.file_name)
-                self.logger.info("Please edit config file and restart Encrypted-DNS")
-                self.config = self.get_default_config()
-                self.save()
-                exit()
+                errMsg = "Failed to load config file. config file " + self.file_name + " is deprecated."
+                self.logger.error(errMsg)
+                raise Exception(errMsg)
 
     def save(self):
-        if not os.path.exists(self.home.rstrip("/") + "/.config/"):
-            os.makedirs(self.home.rstrip("/") + "/.config/")
-
-        if not os.path.exists(self.home.rstrip("/") + "/.config/encrypted_dns"):
-            os.makedirs(self.home.rstrip("/") + "/.config/encrypted_dns")
+        file_init = os.path.isfile(self.file_name)
+        if not file_init:
+            errMsg = "Failed to save config file. config file is not found in " + self.file_name + "."
+            self.logger.error(errMsg)
+            raise Exception(errMsg)
 
         config_json = json.dumps(self.config, indent=4)
         config_file = open(self.file_name, "w")

@@ -1,0 +1,85 @@
+{
+    "version": "1.2.0",
+    "ecs_ip_address": "128.97.0.0",
+    "dnssec": false,
+    "dns_cache": {
+        "enable": true,
+        "override_ttl": 3600
+    },
+    "firewall": {
+        "refuse_ANY": true,
+        "disable_AAAA": true,
+        "rate_limit": 30,
+        "client_blacklist": [
+            "128.97.0.0"
+        ]
+    },
+    "rules": {
+        "force_safe_search": true,
+        "hosts": {
+            "localhost": "127.0.0.1",
+            "cloudflare-dns.com": "1.0.0.1",
+            "dns.google": "8.8.4.4"
+        }
+    },
+    "inbounds": [
+        "0.0.0.0:53",
+        "tcp://0.0.0.0:5301"
+    ],
+    "outbounds": [
+        {
+            "tag": "bootstrap",
+            "dns": [
+                "1.0.0.1"
+            ],
+            "domains": [
+                "captive.apple.com",
+                "connectivitycheck.gstatic.com",
+                "detectportal.firefox.com",
+                "msftconnecttest.com",
+                "nmcheck.gnome.org",
+                "pool.ntp.org",
+                "time.apple.com",
+                "time.asia.apple.com",
+                "time.euro.apple.com",
+                "time.nist.gov",
+                "time.windows.com"
+            ]
+        },
+        {
+            "tag": "void",
+            "dns": [
+                "0.0.0.0"
+            ],
+            "concurrent": false,
+            "domains": [
+                "testvoid.com",
+                "include:testinclude",
+                "subdomain:testsub.com"
+            ]
+        },
+        {
+            "tag": "unencrypted",
+            "dns": [
+                "1.0.0.1",
+                "tcp://8.8.4.4"
+            ],
+            "concurrent": false,
+            "domains": [
+                "sub:youtube.com",
+                "include:netflix.com"
+            ]
+        },
+        {
+            "tag": "encrypted",
+            "dns": [
+                "https://cloudflare-dns.com",
+                "tls://dns.google"
+            ],
+            "concurrent": false,
+            "domains": [
+                "all"
+            ]
+        }
+    ]
+}
