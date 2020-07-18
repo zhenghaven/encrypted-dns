@@ -26,7 +26,7 @@ class DatagramInbound:
             datagram_inbound.serve_forever()
             return datagram_inbound
         except OSError as exc:
-            logger.error(str(exc))
+            logger.exception(exc)
 
 
 class DatagramHandler(socketserver.BaseRequestHandler):

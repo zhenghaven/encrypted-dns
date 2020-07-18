@@ -48,7 +48,7 @@ def parse_dns_address(dns_address):
             dns_address = dns_address[0].rstrip('/')
         return protocol, dns_address, port
     except Exception as exc:
-        logger.error(str(exc))
+        logger.exception(exc)
 
 
 def is_valid_ipv4_address(address):

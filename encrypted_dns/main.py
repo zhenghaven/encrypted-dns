@@ -85,7 +85,7 @@ def start(test=False):
             time.sleep(1)
 
     except Exception as exc:
-        logger.error(str(exc))
+        logger.exception(exc)
     except KeyboardInterrupt:
         pass
     finally:

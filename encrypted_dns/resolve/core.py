@@ -127,7 +127,7 @@ class WireMessageHandler:
                         return False
             return True
         except Exception as exc:
-            self.logger.error(str(exc))
+            self.logger.exception(exc)
 
     def wire_resolve(self, wire_message):
         """Parse wire messages received by inbounds and forward them to corresponding outbounds.
@@ -208,7 +208,7 @@ class WireMessageHandler:
         except dns.exception.Timeout:
             self.logger.error('The DNS operation timed out')
         except Exception as exc:
-            self.logger.error(str(exc))
+            self.logger.exception(exc)
 
     def _resolve_thread(self, outbound, dns_message, question_name, proxy):
         try:
