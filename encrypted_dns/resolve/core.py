@@ -103,9 +103,8 @@ class WireMessageHandler:
                 self.cache.put(answer)
         return response.to_wire()
 
-    def firewall_clearance(self, wire_message, client_ip):
+    def firewall_clearance(self, dns_message, client_ip):
         try:
-            dns_message = dns.message.from_wire(wire_message)
             if client_ip in self.firewall['client_blacklist']:
                 return False
 
@@ -129,7 +128,7 @@ class WireMessageHandler:
         except Exception as exc:
             self.logger.exception(exc)
 
-    def wire_resolve(self, wire_message):
+    def wire_resolve(self, dns_message):
         """Parse wire messages received by inbounds and forward them to corresponding outbounds.
 
         :param wire_message: DNS query message received by inbound.
@@ -137,7 +136,8 @@ class WireMessageHandler:
         """
 
         try:
-            dns_message = dns.message.from_wire(wire_message)
+            self.logger.debug("Received inbound DNS query ID: " + str(dns_message.id) + ".")
+
             message_flags = dns.flags.to_text(dns_message.flags)
 
             # raise an exception since 'wire_resolve' method should only process dns queries
@@ -191,10 +191,6 @@ class WireMessageHandler:
 
             return self.handle_response(dns_response)
 
-        except dns.message.ShortHeader:
-            self.logger.error('The DNS packet passed to from_wire() is too short')
-        except dns.message.TrailingJunk:
-            self.logger.error('The DNS packet passed to from_wire() has extra junk at the end of it')
         except dns.message.UnknownHeaderField:
             self.logger.error('The header field name was not recognized when converting from text into a message')
         except dns.message.BadEDNS:
@@ -203,8 +199,6 @@ class WireMessageHandler:
             self.logger.error('A TSIG with an unknown key was received')
         except dns.message.BadTSIG:
             self.logger.error('A TSIG record occurred somewhere other than the end of the additional data section')
-        except dns.name.BadLabelType:
-            self.logger.error('The label type in DNS name wire format is unknown')
         except dns.exception.Timeout:
             self.logger.error('The DNS operation timed out')
         except Exception as exc:

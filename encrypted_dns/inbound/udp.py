@@ -1,6 +1,8 @@
 import socketserver
 import logging
 
+import dns.message
+
 wire_message_handler = []
 
 
@@ -30,6 +32,9 @@ class DatagramInbound:
 
 
 class DatagramHandler(socketserver.BaseRequestHandler):
+    def setup(self):
+        self.logger = logging.getLogger("encrypted_dns.DatagramHandler")
+
     def handle(self):
         """
         Forward received DNS queries to 'encrypted_dns.resolve.core'
@@ -38,9 +43,23 @@ class DatagramHandler(socketserver.BaseRequestHandler):
         """
 
         wire_data = self.request[0]
-        if wire_message_handler[0].firewall_clearance(wire_data, self.client_address[0]):
-            resolve_data = wire_message_handler[0].wire_resolve(wire_data)
-            datagram_socket = self.request[1]
-            if resolve_data:
-                datagram_socket.sendto(resolve_data, self.client_address)
+        self.logger.debug("Receive inbound msg: " + str(wire_data) + ". From: udp://" + str(self.client_address[0]))
+
+        try:
+            dns_message = dns.message.from_wire(wire_data)
+
+            if wire_message_handler[0].firewall_clearance(dns_message, self.client_address[0]):
+                resolve_data = wire_message_handler[0].wire_resolve(dns_message)
+                datagram_socket = self.request[1]
+                if resolve_data:
+                    datagram_socket.sendto(resolve_data, self.client_address)
+        except dns.message.ShortHeader:
+            self.logger.error('The DNS packet passed to from_wire() is too short')
+        except dns.message.TrailingJunk:
+            self.logger.error('The DNS packet passed to from_wire() has extra junk at the end of it')
+        except dns.name.BadLabelType:
+            self.logger.error('The label type in DNS name wire format is unknown')
+        except Exception as exc:
+            self.logger.exception(exc)
+
         return None
