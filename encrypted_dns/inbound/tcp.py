@@ -32,7 +32,7 @@ class StreamHandler(socketserver.BaseRequestHandler):
         to resolve through outbound protocols.
         Send the resolved DNS responses to clients.
         """
-        wire_data = self.request[0].strip()
+        wire_data = self.request[0]
         if wire_message_handler[0].firewall_clearance(wire_data, self.client_address[0]):
             resolve_data = wire_message_handler[0].wire_resolve(wire_data)
             if resolve_data:
