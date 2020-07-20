@@ -4,21 +4,26 @@ import logging
 
 def parse_domain_rules(rules, name, default=None):
     result = default
+    resultMatch = ""
     priority = 0
     for i in rules.keys():
         # from lowest priority to highest
         if i == 'all' and priority < 1:
             result = rules[i]
+            resultMatch = i
             priority = 0
         elif i.startswith('include:') and i[9:] in name and priority < 2:
             result = rules[i]
+            resultMatch = i
             priority = 1
         elif i.startswith('sub:') and name.endswith(i[5:]) and priority < 3:
             result = rules[i]
+            resultMatch = i
             priority = 2
         elif name == i:
             result = rules[i]
-    return result
+            resultMatch = i
+    return result, resultMatch
 
 
 def parse_dns_address(dns_address):

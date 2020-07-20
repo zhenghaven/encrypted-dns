@@ -15,8 +15,8 @@ import encrypted_dns.outbound
 class OutboundHandler:
     @staticmethod
     def get_group(query_name, domain_group, tag_group, rules=None):
-        tag = encrypted_dns.utils.parse_domain_rules(domain_group, query_name, default='bootstrap')
-        return tag_group[tag], tag_group[tag].get('concurrent', False)
+        tag, match = encrypted_dns.utils.parse_domain_rules(domain_group, query_name, default='bootstrap')
+        return tag_group[tag], tag_group[tag].get('concurrent', False), match
 
     @staticmethod
     def random_outbound(outbounds):
@@ -155,7 +155,7 @@ class WireMessageHandler:
                     return dns_response.to_wire()
 
             # check hosts
-            hosts_record = encrypted_dns.utils.parse_domain_rules(self.hosts, question_name)
+            hosts_record, match = encrypted_dns.utils.parse_domain_rules(self.hosts, question_name)
             if hosts_record:
                 dns_response = dns.message.make_response(dns_message)
                 if encrypted_dns.utils.is_valid_ipv4_address(hosts_record):
@@ -174,7 +174,7 @@ class WireMessageHandler:
             self.edns_subnet_client(dns_message, self.ecs_ip_address)
 
             # list of outbounds in config.json
-            outbound_group, is_concurrent = OutboundHandler.get_group(question_name, self.domain_group, self.tag_group)
+            outbound_group, is_concurrent, match = OutboundHandler.get_group(question_name, self.domain_group, self.tag_group)
             proxy = outbound_group.get('proxies', None)
             if is_concurrent:
                 executor = concurrent.futures.ThreadPoolExecutor(max_workers=10)
