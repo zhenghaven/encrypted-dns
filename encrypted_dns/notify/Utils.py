@@ -31,7 +31,7 @@ def AnswerToObj(answer):
 			"rdType"  : dns.rdatatype.to_text(answer.rdtype),
 			"rdClass" : dns.rdataclass.to_text(answer.rdclass),
 			"ttl"     : answer.ttl,
-			"addr"    : item.address
+			"data"    : item.to_text()
 		})
 	return objs
 
