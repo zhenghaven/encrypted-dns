@@ -61,6 +61,9 @@
                 "sub:google.com",
                 "sub:gmail.com",
                 "sub:facebook.com"
+            ],
+            "notify": [
+                50001
             ]
         }
     ]

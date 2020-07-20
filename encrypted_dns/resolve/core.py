@@ -10,6 +10,7 @@ import dns.message
 import dns.rdatatype
 
 import encrypted_dns.outbound
+import encrypted_dns.notify
 
 
 class OutboundHandler:
@@ -68,9 +69,14 @@ class WireMessageHandler:
         }
 
         self.tag_group = {}  # tag to group dict
+        self.tag_lnotifier = {} # tag to local notifier
         self.domain_group = {}  # domain to tag
         for dns_group in outbounds:
             self.tag_group[dns_group['tag']] = dns_group
+            self.tag_lnotifier[dns_group['tag']] = []
+            if 'notify' in dns_group and dns_group['notify'] is not None:
+                for port in dns_group['notify']:
+                    self.tag_lnotifier[dns_group['tag']].append(encrypted_dns.notify.LocalNotifier(port))
             for domain in dns_group.get('domains', {}):
                 self.domain_group[domain] = dns_group['tag']
 
@@ -188,6 +194,12 @@ class WireMessageHandler:
             else:
                 outbound = OutboundHandler.random_outbound(outbound_group)
                 dns_response = self._resolve_thread(outbound, dns_message, question_name, proxy)
+
+            self.logger.debug("Receive DNS resp from outbound: " + str(dns_response.to_wire()))
+
+            lnotifier = self.tag_lnotifier.get(outbound_group['tag'], [])
+            for noter in lnotifier:
+                noter.Notify(outbound_group, dns_message, dns_response, question_name, match)
 
             return self.handle_response(dns_response)
 
