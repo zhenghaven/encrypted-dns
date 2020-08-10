@@ -20,12 +20,19 @@ def create_inbound(protocol, host, port, core_object):
 
 def start(test=False):
     parser = argparse.ArgumentParser()
-    parser.add_argument('-c', '--config', required=False, type=str, default="default_config.json", help="Path to configuration file.")
+    parser.add_argument('-c', '--config',     required=False, type=str,  help="Path to configuration file.",  default="default_config.json")
+	parser.add_argument('-l', '--log',        required=False, type=str,  help="Path to log file.")
+	parser.add_argument('-d', '--debug',      required=False,            help="Enable logging debug message.", action='store_true')
     args = parser.parse_args()
 
-    logging.basicConfig(format='[%(asctime)s][%(name)s](%(levelname)s) %(message)s',
-                        level='DEBUG',
-                        stream=sys.stdout)
+	if args.log is None:
+		logging.basicConfig(format='[%(asctime)s][%(name)s](%(levelname)s) %(message)s',
+							level='DEBUG' if args.debug else 'INFO',
+							stream=sys.stdout)
+	else:
+		logging.basicConfig(format='[%(asctime)s][%(name)s](%(levelname)s) %(message)s',
+							level='DEBUG' if args.debug else 'INFO',
+							filename=args.log)
 
     logger = logging.getLogger("encrypted_dns")
 
