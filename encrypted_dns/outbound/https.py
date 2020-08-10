@@ -20,8 +20,8 @@ class HTTPSOutbound:
         if outbound_dict['protocol'] != 'https' and outbound_dict['protocol'] != 'doh':
             raise Exception()
 
-        address = outbound_dict['domain']
         ip = outbound_dict['ip']
+        address = outbound_dict.get('domain', ip)
         proxies = outbound_dict.get('proxy', None)
         port = outbound_dict.get('port', 443)
         timeout = outbound_dict.get('timeout', 60)
