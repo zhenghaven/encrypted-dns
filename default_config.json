@@ -15,17 +15,24 @@
     "rules": {
         "force_safe_search": false,
         "hosts": {
-            "localhost"          : "127.0.0.1",
-            "cloudflare-dns.com" : "1.1.1.1",
-            "dns.google"         : "8.8.8.8",
-            "dns.google.com"     : "8.8.8.8",
-            "dns.alidns.com"     : "223.5.5.5",
-            "dns2.alidns.com"    : "223.6.6.6"
+            "localhost"                        : "127.0.0.1",
+            "one.one.one.one"                  : "1.1.1.1",
+            "cloudflare-dns.com"               : "1.1.1.1",
+            "1dot1dot1dot1.cloudflare-dns.com" : "1.0.0.1",
+            "dns.google"                       : "8.8.8.8",
+            "dns.google.com"                   : "8.8.8.8",
+            "google-public-dns-a.google.com"   : "8.8.8.8",
+            "google-public-dns-b.google.com"   : "8.8.4.4",
+            "dns-nosec.quad9.net"              : "9.9.9.10",
+            "dns.adguard.com"                  : "176.103.130.130",
+            "dns-unfiltered.adguard.com"       : "176.103.130.137",
+            "dns.alidns.com"                   : "223.5.5.5",
+            "dns2.alidns.com"                  : "223.6.6.6"
         }
     },
     "inbounds": [
         "0.0.0.0:53",
-        "tcp://0.0.0.0:5301"
+        "tcp://0.0.0.0:53"
     ],
     "outbounds": [
         {
